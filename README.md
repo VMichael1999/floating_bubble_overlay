@@ -39,7 +39,7 @@ It is built on top of [Floating-Bubble-View](https://github.com/TorryDo/Floating
 <br>
 
 <p align="center">
-<img src="doc/demo.gif" width="30%" alt="Floating Bubble Overlay Demo" />
+<img src="doc/demo_v1.1.0.gif" width="30%" alt="Floating Bubble Overlay Demo" />
 </p>
 
 ---

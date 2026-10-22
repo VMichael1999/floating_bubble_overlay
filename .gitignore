@@ -31,3 +31,6 @@ migrate_working_dir/
 .flutter-plugins
 .flutter-plugins-dependencies
 build/
+
+# Demo video for social media (not part of the repo or the package)
+doc/*.mp4
