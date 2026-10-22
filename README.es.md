@@ -11,7 +11,7 @@
   <a href="https://pub.dev/packages/floating_bubble_overlay"><img src="https://img.shields.io/pub/v/floating_bubble_overlay?logo=dart&label=pub.dev&color=0175C2" alt="pub version"></a>
   <a href="https://pub.dev/packages/floating_bubble_overlay/score"><img src="https://img.shields.io/pub/points/floating_bubble_overlay?logo=dart&color=0175C2" alt="pub points"></a>
   <br>
-  <a href="https://github.com/VMichael1999/floating_bubble_overlay/actions/workflows/ci.yml"><img src="https://github.com/VMichael1999/floating_bubble_overlay/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
+  <a href="https://github.com/VMichael1999/floating_bubble_overlay/actions/workflows/ci.yml"><img src="https://github.com/VMichael1999/floating_bubble_overlay/actions/workflows/ci.yml/badge.svg?branch=main&event=push" alt="CI"></a>
   <a href="https://codecov.io/gh/VMichael1999/floating_bubble_overlay"><img src="https://codecov.io/gh/VMichael1999/floating_bubble_overlay/branch/main/graph/badge.svg" alt="coverage"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/VMichael1999/floating_bubble_overlay?color=blue" alt="license: MIT"></a>
   <img src="https://img.shields.io/badge/platform-Android-3DDC84?logo=android&logoColor=white" alt="platform: Android">
