@@ -1,7 +1,7 @@
 /// This class contains all the constants used in the plugin.
 class Constants {
   /// Private constructor to prevent instantiation.
-  Constants._();
+  Constants._(); // coverage:ignore-line
 
   // Method Channel
   static const methodChannel = 'floating_bubble_overlay';

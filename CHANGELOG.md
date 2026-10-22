@@ -17,7 +17,9 @@
 
 ### Other
 - Example app: app icon / asset icon switch, background shape and fill options, close icon styles, Flutter asset icons, hide/show, `onClose`, notification stop button, and the "bubble only while in background" pattern. Restored the missing light theme.
-- Integration tests running on a device/emulator and GitHub Actions CI.
+- Integration tests running on a device/emulator and GitHub Actions CI with a 90% minimum coverage (Dart code is at 100%) and Codecov reports.
+- README badges: pub.dev version, points and likes, CI, coverage, license, platform and Flutter version.
+- Repository links now point to github.com/VMichael1999/floating_bubble_overlay.
 - README: events, API table, Google Play policy notes and troubleshooting.
 
 ## 1.0.6

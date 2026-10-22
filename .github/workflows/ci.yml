@@ -25,7 +25,28 @@ jobs:
       - run: flutter pub get
       - run: dart format --output=none --set-exit-if-changed lib test
       - run: flutter analyze
-      - run: flutter test
+      - run: flutter test --coverage
+
+      - name: Check minimum coverage
+        run: |
+          read hit total < <(awk -F'[:,]' '/^DA:/ { total++; if ($3 > 0) hit++ } END { print hit, total }' coverage/lcov.info)
+          pct=$(( 100 * hit / total ))
+          echo "Coverage: ${hit}/${total} lines (${pct}%)"
+          if [ "$pct" -lt "$MIN_COVERAGE" ]; then
+            echo "::error::Coverage ${pct}% is below the ${MIN_COVERAGE}% minimum"
+            exit 1
+          fi
+        env:
+          MIN_COVERAGE: 90
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage/lcov.info
+          token: ${{ secrets.CODECOV_TOKEN }}
+          # Do not fail the build while the Codecov token is not configured.
+          fail_ci_if_error: false
+
       - run: flutter pub publish --dry-run
 
       - name: Build example APK

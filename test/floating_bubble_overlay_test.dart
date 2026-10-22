@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:floating_bubble_overlay/floating_bubble_overlay.dart';
@@ -200,5 +201,59 @@ void main() {
     final args = calls.single.arguments as Map;
     expect(args['closeIconColor'], 0xFFD32F2F);
     expect(const BubbleOptions().toMap()['closeIconColor'], isNull);
+  });
+
+  test('permission and stop methods call native', () async {
+    final overlay = FloatingBubbleOverlay.instance;
+    expect(await overlay.requestOverlayPermission(), isTrue);
+    expect(await overlay.requestPostNotificationsPermission(), isTrue);
+    expect(await overlay.hasPostNotificationsPermission(), isTrue);
+    expect(await overlay.stopBubble(), isTrue);
+    expect(calls.map((c) => c.method), [
+      'requestOverlayPermission',
+      'requestPostNotificationsPermission',
+      'hasPostNotificationsPermission',
+      'stopBubble',
+    ]);
+  });
+
+  test('PlatformException is rethrown', () async {
+    handler = (_) => throw PlatformException(code: 'ERROR');
+    expect(
+      FloatingBubbleOverlay.instance.isRunning(),
+      throwsA(isA<PlatformException>()),
+    );
+  });
+
+  test('MissingPluginException is rethrown', () async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(platform.methodChannel, null);
+    expect(
+      FloatingBubbleOverlay.instance.isRunning(),
+      throwsA(isA<MissingPluginException>()),
+    );
+  });
+
+  test('forwards tap down and tap up, ignoring malformed events', () async {
+    final events = <String>[];
+    await FloatingBubbleOverlay.instance.startBubble(
+      onTapDown: (x, y) => events.add('down $x $y'),
+      onTapUp: (x, y) => events.add('up $x $y'),
+    );
+    await emit('onTapDown', {'xAxisValue': 1, 'yAxisValue': 2});
+    await emit('onTapUp', {'xAxisValue': 3.5, 'yAxisValue': 4.5});
+    await emit('onTapUp', 'not a map');
+    await emit('onTapUp', {'xAxisValue': 'x', 'yAxisValue': 1});
+    await emit('unknownEvent');
+    expect(events, ['down 1.0 2.0', 'up 3.5 4.5']);
+  });
+
+  test('isSupportedPlatform is true only on Android', () {
+    final channel = MethodChannelFloatingBubbleOverlay();
+    debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    expect(channel.isSupportedPlatform(), isTrue);
+    debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
+    expect(channel.isSupportedPlatform(), isFalse);
+    debugDefaultTargetPlatformOverride = null;
   });
 }

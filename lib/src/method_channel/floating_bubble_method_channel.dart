@@ -39,7 +39,7 @@ class MethodChannelFloatingBubbleOverlay extends FloatingBubbleOverlayPlatform {
       return await methodChannel.invokeMethod<bool>(method, arguments) ?? false;
     } on PlatformException catch (_) {
       logError(
-        'PlatformException: $method\n\nPlease report this issue on GitHub via: https://github.com/MICHAELVM01/floating_bubble_overlay/issues/new',
+        'PlatformException: $method\n\nPlease report this issue on GitHub via: https://github.com/VMichael1999/floating_bubble_overlay/issues/new',
       );
       rethrow;
     } on MissingPluginException catch (_) {

@@ -34,3 +34,6 @@ build/
 
 # Demo video for social media (not part of the repo or the package)
 doc/*.mp4
+
+# Test coverage reports
+coverage/
