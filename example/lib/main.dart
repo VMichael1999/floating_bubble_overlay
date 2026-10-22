@@ -66,9 +66,13 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   final _bubble = FloatingBubbleOverlay.instance;
 
-  static const _bubbleOptions = BubbleOptions(
-    // A Flutter asset declared in pubspec.yaml (new in 1.1.0).
-    bubbleIconAsset: 'assets/bubble.png',
+  /// Whether the bubble uses the Flutter asset icon or the app icon.
+  bool _useAssetIcon = true;
+
+  BubbleOptions get _bubbleOptions => BubbleOptions(
+    // A Flutter asset declared in pubspec.yaml (new in 1.1.0). When it is
+    // null, the bubble falls back to the app icon.
+    bubbleIconAsset: _useAssetIcon ? 'assets/bubble.png' : null,
     closeIconAsset: 'assets/close.png',
     closeIconSize: 56,
     startLocationX: 0,
@@ -196,6 +200,20 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         },
       ),
       _ActionTile(
+        icon: Icons.apps_rounded,
+        title: 'Use App\nIcon',
+        secondary: true,
+        selected: !_useAssetIcon,
+        onTap: () => _selectIcon(context, useAsset: false),
+      ),
+      _ActionTile(
+        icon: Icons.image_rounded,
+        title: 'Use Asset\nIcon',
+        secondary: true,
+        selected: _useAssetIcon,
+        onTap: () => _selectIcon(context, useAsset: true),
+      ),
+      _ActionTile(
         icon: Icons.play_arrow_rounded,
         title: 'Start\nBubble',
         onTap: () => _startBubble(context),
@@ -293,6 +311,36 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         message: 'Error: ${error.runtimeType}',
       );
     }
+  }
+
+  /// Switches between the app icon and the asset icon. A running bubble is
+  /// restarted so the new icon is applied right away.
+  Future<void> _selectIcon(
+    BuildContext context, {
+    required bool useAsset,
+  }) async {
+    if (_useAssetIcon == useAsset) return;
+    setState(() => _useAssetIcon = useAsset);
+
+    final source = useAsset ? 'asset icon' : 'app icon';
+    if (!await _bubble.isRunning()) {
+      if (!context.mounted) return;
+      _logMessage(
+        context: context,
+        message: 'Next bubble will use the $source',
+      );
+      return;
+    }
+
+    await _bubble.stopBubble();
+    // The service stops asynchronously: wait until it is gone.
+    for (var i = 0; i < 20 && await _bubble.isRunning(); i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+    }
+    if (!context.mounted) return;
+    await _startBubble(context);
+    if (!context.mounted) return;
+    _logMessage(context: context, message: 'Bubble restarted with the $source');
   }
 
   Future<void> _startBubble(BuildContext context) {
@@ -399,12 +447,16 @@ class _ActionTile extends StatelessWidget {
   final bool secondary;
   final bool danger;
 
+  /// Highlights the tile as the current choice.
+  final bool selected;
+
   const _ActionTile({
     required this.icon,
     required this.title,
     required this.onTap,
     this.secondary = false,
     this.danger = false,
+    this.selected = false,
   });
 
   @override
@@ -426,7 +478,10 @@ class _ActionTile extends StatelessWidget {
 
     return Material(
       color: bg,
-      borderRadius: BorderRadius.circular(14),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: selected ? BorderSide(color: primary, width: 2) : BorderSide.none,
+      ),
       elevation: secondary ? 1 : 2,
       shadowColor: Colors.black12,
       child: InkWell(
@@ -458,6 +513,8 @@ class _ActionTile extends StatelessWidget {
                   ),
                 ),
               ),
+              if (selected)
+                Icon(Icons.check_circle_rounded, color: primary, size: 20),
             ],
           ),
         ),
