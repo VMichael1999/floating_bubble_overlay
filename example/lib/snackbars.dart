@@ -40,7 +40,7 @@ class SnackBars {
           ),
           child: Row(
             children: [
-              // Barra lateral de estado
+              // Status side bar
               Container(
                 width: 6,
                 height: 64,
@@ -53,7 +53,7 @@ class SnackBars {
               ),
               const SizedBox(width: 12),
 
-              // Ícono circular
+              // Circular icon
               Container(
                 width: 36,
                 height: 36,
@@ -72,7 +72,7 @@ class SnackBars {
 
               const SizedBox(width: 12),
 
-              // Mensaje
+              // Message
               Expanded(
                 child: Text(
                   message,
@@ -87,7 +87,7 @@ class SnackBars {
 
               const SizedBox(width: 6),
 
-              // Cerrar
+              // Close button
               InkWell(
                 borderRadius: BorderRadius.circular(20),
                 onTap:

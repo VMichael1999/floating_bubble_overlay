@@ -1,4 +1,4 @@
-<img src="doc/fondo.png" width="100%" alt="Dash Bubble Banner" />
+<img src="doc/fondo.png" width="100%" alt="Floating Bubble Overlay banner" />
 
 <h2 align="center">
   Floating Bubble Overlay
@@ -12,6 +12,10 @@
     <img alt="Version" src="https://img.shields.io/badge/Version-1.1.0-blue">
   </a>
   <br>
+</p>
+
+<p align="center">
+  <b>English</b> · <a href="README.es.md">Español</a>
 </p>
 
 ---
