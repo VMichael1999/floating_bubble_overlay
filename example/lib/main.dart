@@ -2,8 +2,6 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'snackbars.dart';
 import 'package:floating_bubble_overlay/floating_bubble_overlay.dart';
-import 'package:floating_bubble_overlay/src/models/models.dart';
-import 'package:floating_bubble_overlay/src/enums/enums.dart';
 
 void main() => runApp(const MyApp());
 

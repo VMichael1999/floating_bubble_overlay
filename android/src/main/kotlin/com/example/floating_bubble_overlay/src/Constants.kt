@@ -40,6 +40,7 @@ class Constants {
         const val ENABLE_ANIMATE_TO_EDGE = "enableAnimateToEdge"
         const val ENABLE_BOTTOM_SHADOW = "enableBottomShadow"
         const val KEEP_ALIVE_WHEN_APP_EXIT = "keepAliveWhenAppExit"
+        const val OPEN_APP_ON_TAP = "openAppOnTap"
 
         // Notification Options Arguments
         const val NOTIFICATION_ID = "notificationId"

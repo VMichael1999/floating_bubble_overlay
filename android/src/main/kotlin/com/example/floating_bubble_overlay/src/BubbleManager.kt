@@ -2,18 +2,28 @@ package com.example.floating_bubble_overlay.src
 
 import android.Manifest
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import androidx.core.app.ActivityCompat
-import androidx.core.app.ActivityCompat.requestPermissions
-import androidx.core.content.ContextCompat.startForegroundService
+import androidx.core.content.ContextCompat
 import com.torrydo.floatingbubbleview.FloatingBubbleService
 
-/** BubbleManager is the main class that you will use to manage the bubble. */
-class BubbleManager(private val activity: Activity) {
+/** BubbleManager is the main class that you will use to manage the bubble.
+ *
+ * It works with the application [context] so that checking state and starting/stopping the bubble
+ * does not depend on an Activity. Requesting permissions does need a foreground [activity].
+ */
+class BubbleManager(private val context: Context) {
+
+    /** The current foreground activity, or null when the plugin is not attached to one. */
+    var activity: Activity? = null
+
+    private fun requireActivity(): Activity =
+        activity ?: throw IllegalStateException("This operation requires a foreground Activity.")
 
     /** Request permission to draw over other apps (overlay permission).
      * @return true if permission is granted, null if the permission is being requested.
@@ -26,11 +36,12 @@ class BubbleManager(private val activity: Activity) {
         if (hasOverlayPermission()) return true
 
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val host = requireActivity()
             val intent = Intent(
                 Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                Uri.parse("package:" + activity.packageName)
+                Uri.parse("package:" + host.packageName)
             )
-            activity.startActivityForResult(intent, Constants.OVERLAY_PERMISSION_REQUEST_CODE)
+            host.startActivityForResult(intent, Constants.OVERLAY_PERMISSION_REQUEST_CODE)
             null
         } else {
             true
@@ -44,7 +55,7 @@ class BubbleManager(private val activity: Activity) {
      */
     fun hasOverlayPermission(): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            Settings.canDrawOverlays(activity)
+            Settings.canDrawOverlays(context)
         } else true
     }
 
@@ -63,8 +74,8 @@ class BubbleManager(private val activity: Activity) {
         if (hasPostNotificationsPermission()) return true
 
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            requestPermissions(
-                activity,
+            ActivityCompat.requestPermissions(
+                requireActivity(),
                 arrayOf(Manifest.permission.POST_NOTIFICATIONS),
                 Constants.POST_NOTIFICATIONS_PERMISSION_REQUEST_CODE
             )
@@ -81,8 +92,8 @@ class BubbleManager(private val activity: Activity) {
      */
     fun hasPostNotificationsPermission(): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            ActivityCompat.checkSelfPermission(
-                activity,
+            ContextCompat.checkSelfPermission(
+                context,
                 Manifest.permission.POST_NOTIFICATIONS
             ) == PackageManager.PERMISSION_GRANTED
         } else true
@@ -111,11 +122,11 @@ class BubbleManager(private val activity: Activity) {
 
         if (isRunning()) return false
 
-        val intent = Intent(activity, BubbleService::class.java)
+        val intent = Intent(context, BubbleService::class.java)
         intent.putExtra(Constants.BUBBLE_OPTIONS_INTENT_EXTRA, bubbleOptions)
         intent.putExtra(Constants.NOTIFICATION_OPTIONS_INTENT_EXTRA, notificationOptions)
 
-        startForegroundService(activity, intent)
+        ContextCompat.startForegroundService(context, intent)
 
         return true
     }
@@ -128,8 +139,8 @@ class BubbleManager(private val activity: Activity) {
     fun stopBubble(): Boolean {
         if (!FloatingBubbleService.isRunning()) return false
 
-        val intent = Intent(activity, BubbleService::class.java)
-        activity.stopService(intent)
+        val intent = Intent(context, BubbleService::class.java)
+        context.stopService(intent)
 
         return true
     }

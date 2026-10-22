@@ -13,6 +13,11 @@ import com.torrydo.floatingbubbleview.Route
 
 /** BubbleService is the service that will be started when the bubble is started. */
 class BubbleService : FloatingBubbleService() {
+    private companion object {
+        /** Mirrors the index of `CloseBehavior.fixed` on the Dart side. */
+        const val CLOSE_BEHAVIOR_FIXED = 1
+    }
+
     private lateinit var bubbleOptions: BubbleOptions
     private lateinit var notificationOptions: NotificationOptions
 
@@ -63,13 +68,16 @@ class BubbleService : FloatingBubbleService() {
     }
 
     /** Defines the notification id */
-    override fun notificationId(): Int = notificationOptions.id ?: 1
+    override fun notificationId(): Int =
+        if (::notificationOptions.isInitialized) notificationOptions.id ?: 1 else 1
 
     /** Defines the notification channel id */
-    override fun channelId(): String = notificationOptions.channelId ?: "floating_bubble_channel"
+    override fun channelId(): String =
+        if (::notificationOptions.isInitialized) notificationOptions.channelId ?: "floating_bubble_channel" else "floating_bubble_channel"
 
     /** Defines the notification channel name */
-    override fun channelName(): String = notificationOptions.channelName ?: "Floating Bubble"
+    override fun channelName(): String =
+        if (::notificationOptions.isInitialized) notificationOptions.channelName ?: "Floating Bubble" else "Floating Bubble"
 
     /** This method defines the main setup of the bubble. */
     override fun setupBubble(action: FloatingBubble.Action): FloatingBubble.Builder {
@@ -110,41 +118,14 @@ class BubbleService : FloatingBubbleService() {
             .enableCloseBubble(bubbleOptions.enableClose ?: true)
             .bottomBackground(bubbleOptions.enableBottomShadow ?: false)
             .opacity(bubbleOptions.opacity?.toFloat() ?: 1.0f)
-            .behavior(run {
-                val values = BubbleBehavior.values()
-
-                fun pickSafeDefault(): BubbleBehavior {
-                    // Prefer behaviors that only show close on drag/move.
-                    return values.firstOrNull { v ->
-                        val n = v.name.uppercase()
-                        n.contains("FOLLOW") || n.contains("DRAG") || n.contains("MOVE")
-                    }
-                        ?: values.firstOrNull { v ->
-                            val n = v.name.uppercase()
-                            n.contains("FIXED") && !n.contains("DYNAMIC")
-                        }
-                        ?: (if (values.size > 1) values[1] else values.first())
+            .behavior(
+                when (bubbleOptions.closeBehavior) {
+                    CLOSE_BEHAVIOR_FIXED -> BubbleBehavior.FIXED_CLOSE_BUBBLE
+                    else -> BubbleBehavior.DYNAMIC_CLOSE_BUBBLE
                 }
-
-                val requested = bubbleOptions.closeBehavior
-                    ?.takeIf { it >= 0 && it < values.size }
-                    ?.let { values[it] }
-
-                if (requested == null) {
-                    pickSafeDefault()
-                } else {
-                    val rn = requested.name.uppercase()
-                    // If the requested behavior is a dynamic/always-close one (shows X on tap),
-                    // override it to a safer default.
-                    if (rn.contains("DYNAMIC") || rn.contains("ALWAYS") || rn.contains("TAP") || rn.contains("CLICK")) {
-                        pickSafeDefault()
-                    } else {
-                        requested
-                    }
-                }
-            })
+            )
             .distanceToClose(bubbleOptions.distanceToClose?.toInt() ?: 100)
-            .addFloatingBubbleListener(BubbleCallbackListener(this))
+            .addFloatingBubbleListener(BubbleCallbackListener(this, bubbleOptions.openAppOnTap ?: true))
     }
 
     /** This method defines the notification configuration and shows it. */

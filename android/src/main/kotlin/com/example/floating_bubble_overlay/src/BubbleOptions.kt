@@ -16,6 +16,7 @@ import kotlinx.parcelize.Parcelize
  * @param distanceToClose The distance between the bubble and the bottom edge of the screen to show the close button.
  * @param enableAnimateToEdge Whether the bubble can be animated to the edge or not.
  * @param enableBottomShadow Whether the bubble has a bottom shadow behind the close button or not.
+ * @param openAppOnTap Whether tapping the bubble brings the host app to the foreground or not.
  * @param keepAliveWhenAppExit Whether the bubble will be kept alive when the app is closed or not.
  */
 @Parcelize
@@ -32,6 +33,7 @@ data class BubbleOptions(
     val enableAnimateToEdge: Boolean?,
     val enableBottomShadow: Boolean?,
     val keepAliveWhenAppExit: Boolean?,
+    val openAppOnTap: Boolean?,
 ) : Parcelable {
     companion object {
         /**
@@ -52,7 +54,8 @@ data class BubbleOptions(
                 call.argument(Constants.DISTANCE_TO_CLOSE),
                 call.argument(Constants.ENABLE_ANIMATE_TO_EDGE),
                 call.argument(Constants.ENABLE_BOTTOM_SHADOW),
-                call.argument(Constants.KEEP_ALIVE_WHEN_APP_EXIT)
+                call.argument(Constants.KEEP_ALIVE_WHEN_APP_EXIT),
+                call.argument(Constants.OPEN_APP_ON_TAP)
             )
         }
     }

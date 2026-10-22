@@ -1,7 +1,14 @@
+import 'package:flutter/foundation.dart' show VoidCallback;
+
 import 'src/method_channel/dash_bubble_platform_interface.dart';
 import 'src/models/models.dart';
 
+export 'src/enums/enums.dart';
+export 'src/models/models.dart';
+
 /// The main class of the plugin.
+///
+/// Only Android is supported. On other platforms every method completes with `false`.
 class FloatingBubbleOverlay {
   /// Private constructor to prevent instantiation.
   FloatingBubbleOverlay._();
@@ -71,7 +78,9 @@ class FloatingBubbleOverlay {
   ///
   /// If the bubble is already running or the permission is not granted, this method will return `false`.
   ///
-  /// [options] is and optional parameter that allows you to customize the bubble.
+  /// [bubbleOptions] is an optional parameter that allows you to customize the bubble.
+  ///
+  /// [notificationOptions] is an optional parameter that customizes the foreground service notification.
   ///
   /// [onTap] is an optional callback that will be called when the bubble is tapped.
   ///
@@ -84,7 +93,7 @@ class FloatingBubbleOverlay {
   Future<bool> startBubble({
     BubbleOptions? bubbleOptions,
     NotificationOptions? notificationOptions,
-    Function()? onTap,
+    VoidCallback? onTap,
     Function(double x, double y)? onTapDown,
     Function(double x, double y)? onTapUp,
     Function(double x, double y)? onMove,

@@ -1,5 +1,4 @@
 import 'dart:developer';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -14,18 +13,30 @@ class MethodChannelDashBubble extends DashBubblePlatform {
   @visibleForTesting
   final methodChannel = const MethodChannel(Constants.methodChannel);
 
+  /// Whether the current platform is supported (Android only).
+  @visibleForTesting
+  bool Function() isSupportedPlatform = () =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+
+  VoidCallback? _onTap;
+  void Function(double x, double y)? _onTapDown;
+  void Function(double x, double y)? _onTapUp;
+  void Function(double x, double y)? _onMove;
+
+  bool _handlerRegistered = false;
+
   /// The main wrapper for invoking methods on the method channel.
   ///
   /// This method will catch any [PlatformException] or [MissingPluginException], log the error, and rethrow it.
   ///
   /// returns `false` if the platform is not Android.
   Future<bool> _invokeMethod(String method, [dynamic arguments]) async {
-    try {
-      // If the platform is not Android, return false.
-      if (!Platform.isAndroid) return false;
+    // If the platform is not Android, return false.
+    if (!isSupportedPlatform()) return false;
 
-      // The bang operator is used here because the method channel will always return a boolean from the native implementation.
-      return (await methodChannel.invokeMethod<bool>(method, arguments))!;
+    try {
+      return await methodChannel.invokeMethod<bool>(method, arguments) ??
+          false;
     } on PlatformException catch (_) {
       logError(
         'PlatformException: $method\n\nPlease report this issue on GitHub via: https://github.com/MICHAELVM01/floating_bubble_overlay/issues/new',
@@ -37,6 +48,40 @@ class MethodChannelDashBubble extends DashBubblePlatform {
       );
       rethrow;
     }
+  }
+
+  /// Registers the single native -> Dart handler the first time it is needed.
+  void _ensureHandlerRegistered() {
+    if (_handlerRegistered) return;
+    _handlerRegistered = true;
+    methodChannel.setMethodCallHandler(_handleNativeCall);
+  }
+
+  Future<void> _handleNativeCall(MethodCall call) async {
+    switch (call.method) {
+      case Constants.onTap:
+        _onTap?.call();
+      case Constants.onTapDown:
+        _callWithCoordinates(_onTapDown, call.arguments);
+      case Constants.onTapUp:
+        _callWithCoordinates(_onTapUp, call.arguments);
+      case Constants.onMove:
+        _callWithCoordinates(_onMove, call.arguments);
+      default:
+        throw MissingPluginException(
+          'Method ${call.method} is not implemented',
+        );
+    }
+  }
+
+  void _callWithCoordinates(
+    void Function(double x, double y)? callback,
+    dynamic arguments,
+  ) {
+    if (callback == null || arguments is! Map) return;
+    final x = arguments[Constants.xAxisValue];
+    final y = arguments[Constants.yAxisValue];
+    if (x is num && y is num) callback(x.toDouble(), y.toDouble());
   }
 
   /// Invokes the method channel to request permission to draw over other apps.
@@ -70,6 +115,10 @@ class MethodChannelDashBubble extends DashBubblePlatform {
   }
 
   /// Invokes the method channel to start the bubble.
+  ///
+  /// The callbacks are only replaced when the bubble is actually started, so a
+  /// rejected call (for example because the bubble is already running) does not
+  /// drop the callbacks of the running bubble.
   @override
   Future<bool> startBubble({
     BubbleOptions? bubbleOptions,
@@ -79,38 +128,32 @@ class MethodChannelDashBubble extends DashBubblePlatform {
     Function(double x, double y)? onTapUp,
     Function(double x, double y)? onMove,
   }) async {
-    methodChannel.setMethodCallHandler((call) async {
-      switch (call.method) {
-        case Constants.onTap:
-          onTap?.call();
-          break;
-        case Constants.onTapDown:
-          onTapDown?.call(
-            call.arguments[Constants.xAxisValue],
-            call.arguments[Constants.yAxisValue],
-          );
-          break;
-        case Constants.onTapUp:
-          onTapUp?.call(
-            call.arguments[Constants.xAxisValue],
-            call.arguments[Constants.yAxisValue],
-          );
-          break;
-        case Constants.onMove:
-          onMove?.call(
-            call.arguments[Constants.xAxisValue],
-            call.arguments[Constants.yAxisValue],
-          );
-          break;
-        default:
-          throw UnimplementedError('Method ${call.method} is not implemented');
-      }
-    });
+    final previousOnTap = _onTap;
+    final previousOnTapDown = _onTapDown;
+    final previousOnTapUp = _onTapUp;
+    final previousOnMove = _onMove;
 
-    return (await _invokeMethod(Constants.startBubble, {
-      ...(bubbleOptions ?? BubbleOptions()).toMap(),
-      ...(notificationOptions ?? NotificationOptions()).toMap(),
-    }));
+    _ensureHandlerRegistered();
+    _onTap = onTap;
+    _onTapDown = onTapDown;
+    _onTapUp = onTapUp;
+    _onMove = onMove;
+
+    var started = false;
+    try {
+      started = await _invokeMethod(Constants.startBubble, {
+        ...(bubbleOptions ?? const BubbleOptions()).toMap(),
+        ...(notificationOptions ?? const NotificationOptions()).toMap(),
+      });
+      return started;
+    } finally {
+      if (!started) {
+        _onTap = previousOnTap;
+        _onTapDown = previousOnTapDown;
+        _onTapUp = previousOnTapUp;
+        _onMove = previousOnMove;
+      }
+    }
   }
 
   /// Invokes the method channel to stop the bubble.

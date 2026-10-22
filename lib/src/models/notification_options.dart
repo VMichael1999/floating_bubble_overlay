@@ -1,5 +1,6 @@
+/// Options for the foreground service notification shown while the bubble is running.
 class NotificationOptions {
-  // The id of the service notification.
+  /// The id of the service notification.
   final int id;
 
   /// The title of the service notification.
@@ -11,13 +12,13 @@ class NotificationOptions {
   /// The icon of the service notification.
   final String? icon;
 
-  // The channel id of the service notification.
+  /// The channel id of the service notification.
   final String channelId;
 
-  // The channel name of the service notification.
+  /// The channel name of the service notification.
   final String channelName;
 
-  NotificationOptions({
+  const NotificationOptions({
     this.id = 101,
     this.title,
     this.body,
@@ -26,6 +27,7 @@ class NotificationOptions {
     this.channelName = 'Bubble Notification',
   });
 
+  /// Serializes the options for the native side.
   Map<String, dynamic> toMap() {
     return {
       'notificationId': id,

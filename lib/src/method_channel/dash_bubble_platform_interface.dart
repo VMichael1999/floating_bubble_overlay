@@ -1,9 +1,10 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 import 'dash_bubble_method_channel.dart';
 import '../models/models.dart';
 
+/// The interface that platform implementations of floating_bubble_overlay must extend.
 abstract class DashBubblePlatform extends PlatformInterface {
   /// Constructs a DashBubblePlatform.
   DashBubblePlatform() : super(token: _token);

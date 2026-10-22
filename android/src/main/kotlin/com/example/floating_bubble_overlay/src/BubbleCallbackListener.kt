@@ -5,15 +5,17 @@ import android.content.pm.PackageManager
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.torrydo.floatingbubbleview.FloatingBubble
 
-class BubbleCallbackListener(bubbleService: BubbleService) : FloatingBubble.Listener {
-    private val bubbleService = bubbleService
+class BubbleCallbackListener(
+    private val bubbleService: BubbleService,
+    private val openAppOnTap: Boolean = true,
+) : FloatingBubble.Listener {
 
     /** This method is called when the bubble is tapped.
-     * It brings the host app to foreground and sends a broadcast to the app to handle the tap.
+     * It brings the host app to foreground (when enabled) and sends a broadcast to the app to handle the tap.
      */
     override fun onClick() {
         // 1) Bring the host app to foreground ONLY on click
-        try {
+        if (openAppOnTap) try {
             val pm: PackageManager = bubbleService.packageManager
             val launchIntent = pm.getLaunchIntentForPackage(bubbleService.packageName)
             launchIntent?.addFlags(

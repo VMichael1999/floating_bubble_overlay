@@ -9,7 +9,7 @@
     <img src="https://img.shields.io/badge/Platform-Flutter-02569B?logo=flutter" alt="Platform">
   </a>
   <a href="#">
-    <img alt="Version" src="https://img.shields.io/badge/Version-1.0.5-blue">
+    <img alt="Version" src="https://img.shields.io/badge/Version-1.0.6-blue">
   </a>
   <br>
 </p>
@@ -18,137 +18,111 @@
 
 ## 💡 Overview
 
-**Floating Bubble Overlay** is a Flutter plugin that allows you to create a floating bubble similar to Facebook Messenger chat heads.  
-It is fully customizable and built on top of **Floating-Bubble-View**, optimized for modern Android versions (15).
+**Floating Bubble Overlay** is a Flutter plugin that shows a floating bubble (chat head) on top of other apps, similar to Facebook Messenger.
+It is built on top of [Floating-Bubble-View](https://github.com/TorryDo/Floating-Bubble-View).
 
-This version includes enhancements:
-- ✔ Tap the bubble → Opens your app  
-- ✔ Drag the bubble → Shows a closing “X” zone  
-- ✔ Custom icon support  
-- ✔ Uses your app icon if no bubbleIcon is provided  
-- ✔ Smooth drag physics & animations  
-- ✔ Clean separation of Bubble Options & Notification Options  
+- ✔ Tap the bubble → brings your app to the foreground (configurable with `openAppOnTap`)
+- ✔ Drag the bubble → shows a close "X" zone (`following` or `fixed`)
+- ✔ Custom bubble and close icons (falls back to your app icon)
+- ✔ Tap down / tap up / move callbacks
+- ✔ Customizable foreground service notification
 
-> **Note:** Only **Android** is supported. iOS does not allow overlays over other apps.
+> **Note:** Only **Android** is supported (API 21+). Android does not let other platforms draw over apps, so on iOS / web every method simply returns `false`.
 
 <br>
 
 <p align="center">
 <img src="doc/demo.gif" width="30%" alt="Floating Bubble Overlay Demo" />
-<br>
-This animation represents how the plugin behaves
 </p>
 
 ---
 
 ## 🔧 Setup
 
-Set Min SDK in your `android/app/build.gradle`:
+Add the dependency:
 
-```gradle
-android {
-    defaultConfig {
-        minSdkVersion 21
-    }
-}
+```yaml
+dependencies:
+  floating_bubble_overlay: ^1.0.6
 ```
 
-Permissions are automatically injected:
+Android `minSdk` must be **21** or higher (`android/app/build.gradle`).
 
-```xml
-<uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
-<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+The plugin's manifest already declares, and you **do not** need to add them yourself:
+
+- `SYSTEM_ALERT_WINDOW`, `POST_NOTIFICATIONS`, `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_SPECIAL_USE`
+- the `BubbleService` foreground service (`foregroundServiceType="specialUse"`, with the subtype property required by Android 14+)
+
+### Custom icons
+
+`bubbleIcon`, `closeIcon` and the notification `icon` are **drawable resource names without extension**, placed in your **app**:
+
+```
+android/app/src/main/res/drawable/my_bubble.png   →   bubbleIcon: 'my_bubble'
 ```
 
-### Register the Service
-
-```xml
-<service
-    android:name="com.example.floating_bubble_overlay.src.BubbleService"
-    android:exported="false"
-    android:foregroundServiceType="mediaProjection" />
-```
+If the resource is not found, the app icon (or a default close icon) is used.
 
 ---
 
 ## 💻 Usage
 
-Import:
-
 ```dart
 import 'package:floating_bubble_overlay/floating_bubble_overlay.dart';
-```
 
-Start the bubble:
+final bubble = FloatingBubbleOverlay.instance;
 
-```dart
-await FloatingBubbleOverlay.startBubble(
-  bubbleIcon: 'bubble_icon',   
-  bubbleSize: 64,
-  opacity: 1.0,
-  enableClose: true,
-  enableBottomShadow: true,
-  closeBehavior: 1,
+// 1. Permissions
+if (!await bubble.hasOverlayPermission()) {
+  await bubble.requestOverlayPermission();
+}
+await bubble.requestPostNotificationsPermission(); // Android 13+
+
+// 2. Start
+final started = await bubble.startBubble(
+  bubbleOptions: const BubbleOptions(
+    bubbleIcon: 'my_bubble',
+    bubbleSize: 64,
+    opacity: 1,
+    closeBehavior: CloseBehavior.following,
+    keepAliveWhenAppExit: false,
+  ),
+  notificationOptions: const NotificationOptions(
+    title: 'Bubble is running',
+    body: 'Tap the bubble to come back',
+  ),
+  onTap: () => print('tapped'),
+  onMove: (x, y) => print('moved to $x, $y'),
 );
+
+// 3. Stop
+await bubble.stopBubble();
 ```
 
-Stop:
-
-```dart
-await FloatingBubbleOverlay.stopBubble();
-```
+`startBubble` returns `false` if the overlay permission is missing or the bubble is already running (the callbacks of the running bubble are kept).
 
 ---
 
-## 🎨 Bubble Customization Options
+## 🎨 BubbleOptions
 
-| Option | Description | Default | Notes |
-|-------|-------------|---------|-------|
-| `bubbleIcon` | Icon of the bubble | `null` | Must be inside `/android/src/main/res/drawable/` without extension |
-| `closeIcon` | Icon of close bubble | Default Android icon | Same path rule |
-| `bubbleSize` | Size of the bubble | `60` | px |
-| `opacity` | Transparency | `1.0` | 0.0 → 1.0 |
-| `distanceToClose` | Distance to show X | `100` | px |
-| `closeBehavior` | Close behavior enum | `1` | Drag = X, Tap = open app |
-| `enableAnimateToEdge` | Auto-align to edges | `true` | — |
-| `keepAliveWhenAppExit` | Persistent after exiting | `false` | — |
+| Option | Description | Default |
+|-------|-------------|---------|
+| `bubbleIcon` | Drawable name of the bubble icon | app icon |
+| `closeIcon` | Drawable name of the close icon | system close icon |
+| `startLocationX` / `startLocationY` | Initial position (dp) | `0` / `200` |
+| `bubbleSize` | Bubble width and height (dp), must be `> 0` | `60` |
+| `opacity` | Transparency, `0.0` → `1.0` | `1.0` |
+| `enableClose` | Show the close "X" while dragging | `true` |
+| `closeBehavior` | `CloseBehavior.following` (X follows the bubble) or `CloseBehavior.fixed` (X fixed at the bottom) | `following` |
+| `distanceToClose` | Distance (dp) at which the bubble snaps to the "X" | `100` |
+| `enableAnimateToEdge` | Snap the bubble to the screen edge on release | `true` |
+| `enableBottomShadow` | Gradient behind the close button | `true` |
+| `keepAliveWhenAppExit` | Keep the bubble when the app is swiped away | `false` |
+| `openAppOnTap` | Bring the app to the foreground when the bubble is tapped | `true` |
 
----
+## 🔔 NotificationOptions
 
-## 📌 Click → Open App  
-Implemented in:
-
-```
-BubbleCallbackListener.kt
-```
-
-A tap now opens your app without triggering the close zone.
-
----
-
-## 🧱 Internal Structure
-
-```
-android/
-  src/main/kotlin/com/example/floating_bubble_overlay/
-    FloatingBubbleOverlayPlugin.kt
-    src/
-      BubbleService.kt
-      BubbleManager.kt
-      BubbleOptions.kt
-      NotificationOptions.kt
-      BubbleCallbackListener.kt
-```
-
----
-
-## ⚙ Service Notification
-Uses `NotificationCompat` with complete customization:
-- Channel ID
-- Icon
-- Title / Body  
-- Foreground service compliance (Android 13+)
+`id` (default `101`), `title` (defaults to the app name), `body`, `icon` (drawable name), `channelId`, `channelName`.
 
 ---
 
@@ -156,24 +130,12 @@ Uses `NotificationCompat` with complete customization:
 
 | Platform | Support |
 |---------|---------|
-| Android | ✔ |
-| iOS | ❌ Overlay not allowed |
-
----
-
-## 🛣 Roadmap
-
-- [ ] Add full example UI  
-- [ ] Add foreground-app auto-hide logic  
-- [ ] Support widget-based bubble icons  
-- [x] Tap bubble → open app  
-- [x] Drag bubble → show close zone  
+| Android (API 21+) | ✔ |
+| iOS / Web / Desktop | ❌ methods return `false` |
 
 ---
 
 ## 🧑‍💻 Author
 
-Developed and maintained by **Michael Anthony Valdiviezo Maza**  
-Enhanced for production overlay performance and modern Android behavior.
-
-```
+Developed and maintained by **Michael Anthony Valdiviezo Maza**.
+Licensed under the MIT license. Built on [Floating-Bubble-View](https://github.com/TorryDo/Floating-Bubble-View) by TorryDo.
