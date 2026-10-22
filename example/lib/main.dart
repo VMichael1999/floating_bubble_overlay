@@ -20,7 +20,6 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(
           seedColor: primaryColor,
           primary: primaryColor,
-          background: const Color(0xFFF2F4F8),
           surface: Colors.white,
         ),
         appBarTheme: const AppBarTheme(
@@ -65,13 +64,37 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
-  // Prevent repeated start/stop calls.
-  bool _autoRunning = false;
+  final _bubble = FloatingBubbleOverlay.instance;
+
+  static const _bubbleOptions = BubbleOptions(
+    // A Flutter asset declared in pubspec.yaml (new in 1.1.0).
+    bubbleIconAsset: 'assets/bubble.png',
+    closeIconAsset: 'assets/close.png',
+    closeIconSize: 56,
+    startLocationX: 0,
+    startLocationY: 100,
+    bubbleSize: 60,
+    closeBehavior: CloseBehavior.following,
+  );
+
+  static const _notificationOptions = NotificationOptions(
+    id: 1,
+    title: 'Floating Bubble Panel',
+    body: 'Tap to open the app',
+    channelId: 'floating_bubble_overlay_example',
+    channelName: 'Floating Bubble',
+    showStopAction: true,
+    stopActionLabel: 'Close bubble',
+  );
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
+    // The app can be cold-started by tapping the bubble (e.g. after Android
+    // restored it), and no `resumed` event is sent then: hide it here too.
+    _bubble.hideBubble();
   }
 
   @override
@@ -82,20 +105,136 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // When app goes background -> start bubble.
-    if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.inactive) {
-      _startBubbleIfPossible(auto: true);
-    }
+    // App goes to background -> show the bubble (start it the first time).
+    if (state == AppLifecycleState.paused) _showOrStartBubble();
 
-    // When app returns foreground -> stop bubble.
-    if (state == AppLifecycleState.resumed) {
-      _stopBubbleIfPossible(auto: true);
+    // App comes back -> hide the bubble but keep the service and its callbacks.
+    if (state == AppLifecycleState.resumed) _bubble.hideBubble();
+  }
+
+  Future<void> _showOrStartBubble() async {
+    if (!await _bubble.hasOverlayPermission()) return;
+    if (await _bubble.isRunning()) {
+      await _bubble.showBubble();
+    } else if (mounted) {
+      await _startBubble(context);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final tiles = [
+      _ActionTile(
+        icon: Icons.layers_rounded,
+        title: 'Overlay\nPermission',
+        onTap:
+            () => _run(
+              context,
+              _bubble.requestOverlayPermission,
+              (ok) =>
+                  ok
+                      ? 'Overlay permission granted'
+                      : 'Overlay permission not granted',
+            ),
+      ),
+      _ActionTile(
+        icon: Icons.verified_user_rounded,
+        title: 'Has\nPermission?',
+        secondary: true,
+        onTap:
+            () => _run(
+              context,
+              _bubble.hasOverlayPermission,
+              (ok) =>
+                  ok
+                      ? 'Overlay permission granted'
+                      : 'Overlay permission not granted',
+            ),
+      ),
+      _ActionTile(
+        icon: Icons.notifications_active_rounded,
+        title: 'Notification\nPermission',
+        onTap:
+            () => _run(
+              context,
+              _bubble.requestPostNotificationsPermission,
+              (ok) =>
+                  ok
+                      ? 'Notification permission granted'
+                      : 'Notification permission not granted',
+            ),
+      ),
+      _ActionTile(
+        icon: Icons.notifications_rounded,
+        title: 'Notifications\nEnabled?',
+        secondary: true,
+        onTap:
+            () => _run(
+              context,
+              _bubble.hasPostNotificationsPermission,
+              (ok) =>
+                  ok
+                      ? 'Notification permission granted'
+                      : 'Notification permission not granted',
+            ),
+      ),
+      _ActionTile(
+        icon: Icons.play_circle_fill_rounded,
+        title: 'Is Bubble\nActive?',
+        secondary: true,
+        onTap: () async {
+          final running = await _bubble.isRunning();
+          final visible = await _bubble.isBubbleVisible();
+          if (!context.mounted) return;
+          _logMessage(
+            context: context,
+            message:
+                running
+                    ? 'Bubble is active (${visible ? 'visible' : 'hidden'})'
+                    : 'Bubble is not active',
+          );
+        },
+      ),
+      _ActionTile(
+        icon: Icons.play_arrow_rounded,
+        title: 'Start\nBubble',
+        onTap: () => _startBubble(context),
+      ),
+      _ActionTile(
+        icon: Icons.visibility_off_rounded,
+        title: 'Hide\nBubble',
+        secondary: true,
+        onTap:
+            () => _run(
+              context,
+              _bubble.hideBubble,
+              (ok) => ok ? 'Bubble hidden' : 'Bubble is not visible',
+            ),
+      ),
+      _ActionTile(
+        icon: Icons.visibility_rounded,
+        title: 'Show\nBubble',
+        secondary: true,
+        onTap:
+            () => _run(
+              context,
+              _bubble.showBubble,
+              (ok) => ok ? 'Bubble shown' : 'Bubble is not hidden',
+            ),
+      ),
+      _ActionTile(
+        icon: Icons.stop_circle_rounded,
+        title: 'Stop\nBubble',
+        danger: true,
+        onTap:
+            () => _run(
+              context,
+              _bubble.stopBubble,
+              (ok) => ok ? 'Bubble stopped' : 'Bubble did not stop',
+            ),
+      ),
+    ];
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -108,173 +247,22 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Encabezado
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 8,
-                      offset: Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.primary.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        Icons.bubble_chart_rounded,
-                        color: Theme.of(context).colorScheme.primary,
-                        size: 26,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Floating Bubble Overlay',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Manage permissions and service status.',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.black54,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
+              const _Header(),
               const SizedBox(height: 16),
-
               const Text(
                 'Quick Actions',
                 style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 8),
-
-              // Grid profesional
               Expanded(
                 child: LayoutBuilder(
                   builder: (context, c) {
-                    final crossAxisCount = c.maxWidth >= 520 ? 3 : 2;
                     return GridView.count(
-                      crossAxisCount: crossAxisCount,
+                      crossAxisCount: c.maxWidth >= 520 ? 3 : 2,
                       mainAxisSpacing: 14,
                       crossAxisSpacing: 14,
                       childAspectRatio: 1.6,
-                      children: [
-                        _ActionTile(
-                          icon: Icons.layers_rounded,
-                          title: 'Overlay\nPermission',
-                          onTap: () => _requestOverlayPermission(context),
-                        ),
-                        _ActionTile(
-                          icon: Icons.verified_user_rounded,
-                          title: 'Has\nPermission?',
-                          onTap: () => _hasOverlayPermission(context),
-                          secondary: true,
-                        ),
-                        _ActionTile(
-                          icon: Icons.notifications_active_rounded,
-                          title: 'Notification\nPermission',
-                          onTap:
-                              () =>
-                                  _requestPostNotificationsPermission(context),
-                        ),
-                        _ActionTile(
-                          icon: Icons.notifications_rounded,
-                          title: 'Notifications\nEnabled?',
-                          onTap: () => _hasPostNotificationsPermission(context),
-                          secondary: true,
-                        ),
-                        _ActionTile(
-                          icon: Icons.play_circle_fill_rounded,
-                          title: 'Is Bubble\nActive?',
-                          onTap: () => _isRunning(context),
-                          secondary: true,
-                        ),
-                        _ActionTile(
-                          icon: Icons.play_arrow_rounded,
-                          title: 'Start\nBubble',
-                          onTap: () {
-                            _startBubble(
-                              context,
-                              bubbleOptions: BubbleOptions(
-                                bubbleIcon: null,
-                                startLocationX: 0,
-                                startLocationY: 100,
-                                bubbleSize: 60,
-                                opacity: 1,
-                                enableClose: true,
-                                closeBehavior: CloseBehavior.following,
-                                distanceToClose: 100,
-                                enableAnimateToEdge: true,
-                                enableBottomShadow: true,
-                                keepAliveWhenAppExit: false,
-                              ),
-                              notificationOptions: NotificationOptions(
-                                id: 1,
-                                title: 'Floating Bubble Panel',
-                                body: 'Floating bubble service is active',
-                                channelId:
-                                    'floating_bubble_overlay_notification',
-                                channelName: 'Floating Bubble Notification',
-                              ),
-                              onTap:
-                                  () => _logMessage(
-                                    context: context,
-                                    message: 'Bubble tapped',
-                                  ),
-                              onTapDown:
-                                  (x, y) => _logMessage(
-                                    context: context,
-                                    message:
-                                        'Bubble pressed at: ${_getRoundedCoordinatesAsString(x, y)}',
-                                  ),
-                              onTapUp:
-                                  (x, y) => _logMessage(
-                                    context: context,
-                                    message:
-                                        'Bubble released at: ${_getRoundedCoordinatesAsString(x, y)}',
-                                  ),
-                              onMove:
-                                  (x, y) => _logMessage(
-                                    context: context,
-                                    message:
-                                        'Bubble moved to: ${_getRoundedCoordinatesAsString(x, y)}',
-                                  ),
-                            );
-                          },
-                        ),
-                        _ActionTile(
-                          icon: Icons.stop_circle_rounded,
-                          title: 'Stop\nBubble',
-                          onTap: () => _stopBubble(context),
-                          danger: true,
-                        ),
-                      ],
+                      children: tiles,
                     );
                   },
                 ),
@@ -286,15 +274,19 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  Future<void> _runMethod(
+  /// Runs a plugin call and shows its result (or error) in a snackbar.
+  Future<void> _run(
     BuildContext context,
-    Future<void> Function() method,
+    Future<bool> Function() method,
+    String Function(bool result) describe,
   ) async {
     try {
-      await method();
+      final result = await method();
+      if (!context.mounted) return;
+      _logMessage(context: context, message: describe(result));
     } catch (error) {
       log(name: 'Floating Bubble Overlay Playground', error.toString());
-
+      if (!context.mounted) return;
       SnackBars.show(
         context: context,
         status: SnackBarStatus.error,
@@ -303,177 +295,41 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
-  Future<void> _requestOverlayPermission(BuildContext context) async {
-    await _runMethod(context, () async {
-      final isGranted =
-          await FloatingBubbleOverlay.instance.requestOverlayPermission();
-
-      SnackBars.show(
-        context: context,
-        status: SnackBarStatus.success,
-        message:
-            isGranted
-                ? 'Overlay permission granted'
-                : 'Overlay permission not granted',
-      );
-    });
-  }
-
-  Future<void> _hasOverlayPermission(BuildContext context) async {
-    await _runMethod(context, () async {
-      final hasPermission =
-          await FloatingBubbleOverlay.instance.hasOverlayPermission();
-
-      SnackBars.show(
-        context: context,
-        status: SnackBarStatus.success,
-        message:
-            hasPermission
-                ? 'Overlay permission granted'
-                : 'Overlay permission not granted',
-      );
-    });
-  }
-
-  Future<void> _requestPostNotificationsPermission(BuildContext context) async {
-    await _runMethod(context, () async {
-      final isGranted =
-          await FloatingBubbleOverlay.instance
-              .requestPostNotificationsPermission();
-
-      SnackBars.show(
-        context: context,
-        status: SnackBarStatus.success,
-        message:
-            isGranted
-                ? 'Notification permission granted'
-                : 'Notification permission not granted',
-      );
-    });
-  }
-
-  Future<void> _hasPostNotificationsPermission(BuildContext context) async {
-    await _runMethod(context, () async {
-      final hasPermission =
-          await FloatingBubbleOverlay.instance.hasPostNotificationsPermission();
-
-      SnackBars.show(
-        context: context,
-        status: SnackBarStatus.success,
-        message:
-            hasPermission
-                ? 'Notification permission granted'
-                : 'Notification permission not granted',
-      );
-    });
-  }
-
-  Future<void> _isRunning(BuildContext context) async {
-    await _runMethod(context, () async {
-      final isRunning = await FloatingBubbleOverlay.instance.isRunning();
-
-      SnackBars.show(
-        context: context,
-        status: SnackBarStatus.success,
-        message: isRunning ? 'Bubble is active' : 'Bubble is not active',
-      );
-    });
-  }
-
-  // Auto-start helper: checks permission and avoids duplicates.
-  Future<void> _startBubbleIfPossible({bool auto = false}) async {
-    if (_autoRunning) return;
-
-    final hasPermission =
-        await FloatingBubbleOverlay.instance.hasOverlayPermission();
-    if (!hasPermission) {
-      if (auto && mounted) {
-        _logMessage(
-          context: context,
-          message: 'Overlay permission is not granted',
-        );
-      }
-      return;
-    }
-
-    _autoRunning = true;
-    await _startBubble(
+  Future<void> _startBubble(BuildContext context) {
+    return _run(
       context,
-      bubbleOptions: BubbleOptions(
-        bubbleIcon: null,
-        startLocationX: 0,
-        startLocationY: 100,
-        bubbleSize: 60,
-        opacity: 1,
-        enableClose: true,
-        closeBehavior: CloseBehavior.following,
-        distanceToClose: 100,
-        enableAnimateToEdge: true,
-        enableBottomShadow: true,
-        keepAliveWhenAppExit: false,
+      () => _bubble.startBubble(
+        bubbleOptions: _bubbleOptions,
+        notificationOptions: _notificationOptions,
+        onTap: () => _logMessage(context: context, message: 'Bubble tapped'),
+        onTapDown:
+            (x, y) => log(
+              name: 'FloatingBubbleOverlayPlayground',
+              'Bubble pressed at: ${_format(x, y)}',
+            ),
+        onTapUp:
+            (x, y) => _logMessage(
+              context: context,
+              message: 'Bubble released at: ${_format(x, y)}',
+            ),
+        onMove:
+            (x, y) => log(
+              name: 'FloatingBubbleOverlayPlayground',
+              'Bubble moved to: ${_format(x, y)}',
+            ),
+        onClose:
+            () => _logMessage(
+              context: context,
+              message: 'Bubble closed by the user',
+            ),
       ),
-      notificationOptions: NotificationOptions(
-        id: 1,
-        title: 'Floating Bubble Panel',
-        body: 'Floating bubble service is active',
-        channelId: 'floating_bubble_overlay_notification',
-        channelName: 'Floating Bubble Notification',
-      ),
+      (ok) => ok ? 'Bubble started' : 'Bubble did not start',
     );
-  }
-
-  // Auto-stop helper.
-  Future<void> _stopBubbleIfPossible({bool auto = false}) async {
-    if (!_autoRunning) {
-      // Even if we think it's stopped, ensure native service is stopped.
-      await FloatingBubbleOverlay.instance.stopBubble();
-      return;
-    }
-    _autoRunning = false;
-    await _stopBubble(context);
-  }
-
-  Future<void> _startBubble(
-    BuildContext context, {
-    BubbleOptions? bubbleOptions,
-    NotificationOptions? notificationOptions,
-    VoidCallback? onTap,
-    Function(double x, double y)? onTapDown,
-    Function(double x, double y)? onTapUp,
-    Function(double x, double y)? onMove,
-  }) async {
-    await _runMethod(context, () async {
-      final hasStarted = await FloatingBubbleOverlay.instance.startBubble(
-        bubbleOptions: bubbleOptions,
-        notificationOptions: notificationOptions,
-        onTap: onTap,
-        onTapDown: onTapDown,
-        onTapUp: onTapUp,
-        onMove: onMove,
-      );
-
-      SnackBars.show(
-        context: context,
-        status: SnackBarStatus.success,
-        message: hasStarted ? 'Bubble started' : 'Bubble did not start',
-      );
-    });
-  }
-
-  Future<void> _stopBubble(BuildContext context) async {
-    await _runMethod(context, () async {
-      final hasStopped = await FloatingBubbleOverlay.instance.stopBubble();
-
-      SnackBars.show(
-        context: context,
-        status: SnackBarStatus.success,
-        message: hasStopped ? 'Bubble stopped' : 'Bubble did not stop',
-      );
-    });
   }
 
   void _logMessage({required BuildContext context, required String message}) {
     log(name: 'FloatingBubbleOverlayPlayground', message);
+    if (!context.mounted) return;
 
     SnackBars.show(
       context: context,
@@ -482,8 +338,57 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     );
   }
 
-  String _getRoundedCoordinatesAsString(double x, double y) {
+  String _format(double x, double y) {
     return '${x.toStringAsFixed(2)}, ${y.toStringAsFixed(2)}';
+  }
+}
+
+class _Header extends StatelessWidget {
+  const _Header();
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: const [
+          BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 3)),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: primary.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(Icons.bubble_chart_rounded, color: primary, size: 26),
+          ),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Floating Bubble Overlay',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'The bubble shows when you leave the app and hides when you come back.',
+                  style: TextStyle(fontSize: 13, color: Colors.black54),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -535,7 +440,7 @@ class _ActionTile extends StatelessWidget {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: fg.withOpacity(secondary ? 0.12 : 0.18),
+                  color: fg.withValues(alpha: secondary ? 0.12 : 0.18),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: fg, size: 24),

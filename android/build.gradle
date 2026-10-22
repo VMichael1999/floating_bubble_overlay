@@ -6,7 +6,6 @@ buildscript {
     repositories {
         google()
         mavenCentral()
-        maven { url "https://jitpack.io" }
     }
 
     dependencies {
@@ -15,11 +14,10 @@ buildscript {
     }
 }
 
-allprojects {
+rootProject.allprojects {
     repositories {
         google()
         mavenCentral()
-        maven { url "https://jitpack.io" }
     }
 }
 
@@ -52,14 +50,13 @@ android {
 }
 
 dependencies {
-    implementation "androidx.core:core-ktx:1.9.0"
+    implementation "androidx.core:core-ktx:1.13.1"
     // AndroidX LocalBroadcastManager (needed for broadcasts)
     implementation "androidx.localbroadcastmanager:localbroadcastmanager:1.1.0"
 
     // Floating bubble view library used by the native Android code
     implementation("io.github.torrydo:floating-bubble-view:0.5.3")
 
-    // Unit test deps (kept from previous nested block)
     testImplementation "org.jetbrains.kotlin:kotlin-test"
     testImplementation "org.mockito:mockito-core:5.0.0"
 }

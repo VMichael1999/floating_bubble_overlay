@@ -6,8 +6,7 @@ import android.content.Intent
 import io.flutter.plugin.common.MethodChannel
 
 /** This broadcast listener is used to listen for the bubble callbacks */
-class BroadcastListener(channel: MethodChannel) : BroadcastReceiver() {
-    private val channel = channel
+class BroadcastListener(private val channel: MethodChannel) : BroadcastReceiver() {
 
     override fun onReceive(context: Context?, intent: Intent) {
         when (intent.action) {
@@ -15,6 +14,11 @@ class BroadcastListener(channel: MethodChannel) : BroadcastReceiver() {
             /** This method is called when the bubble is tapped */
             Constants.ON_TAP -> {
                 channel.invokeMethod(Constants.ON_TAP, null)
+            }
+
+            /** This method is called when the user closes the bubble (drag to close or notification button) */
+            Constants.ON_CLOSE -> {
+                channel.invokeMethod(Constants.ON_CLOSE, null)
             }
 
             /** This method is called when the bubble is tapped down (pressed) */

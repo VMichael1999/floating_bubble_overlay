@@ -4,13 +4,15 @@ import android.os.Parcelable
 import io.flutter.plugin.common.MethodCall
 import kotlinx.parcelize.Parcelize
 
-/** BubbleOptions is the class that contains the options for the bubble.
+/** NotificationOptions is the class that contains the options for the service notification.
  * @param id The id of the notification that will be shown when the bubble is running.
  * @param title The title of the notification that will be shown when the bubble is running.
  * @param body The body of the notification that will be shown when the bubble is running.
  * @param icon The icon of the notification that will be shown when the bubble is running.
  * @param channelId The channel id of the notification that will be shown when the bubble is running.
  * @param channelName The channel name of the notification that will be shown when the bubble is running.
+ * @param showStopAction Whether the notification shows a button that closes the bubble.
+ * @param stopActionLabel The label of the stop button.
  */
 @Parcelize
 data class NotificationOptions(
@@ -20,6 +22,8 @@ data class NotificationOptions(
     val icon: String?,
     val channelId: String?,
     val channelName: String?,
+    val showStopAction: Boolean?,
+    val stopActionLabel: String?,
 ) : Parcelable {
     companion object {
         /**
@@ -35,6 +39,8 @@ data class NotificationOptions(
                 call.argument(Constants.NOTIFICATION_ICON),
                 call.argument(Constants.NOTIFICATION_CHANNEL_ID),
                 call.argument(Constants.NOTIFICATION_CHANNEL_NAME),
+                call.argument(Constants.NOTIFICATION_SHOW_STOP_ACTION),
+                call.argument(Constants.NOTIFICATION_STOP_ACTION_LABEL),
             )
         }
     }

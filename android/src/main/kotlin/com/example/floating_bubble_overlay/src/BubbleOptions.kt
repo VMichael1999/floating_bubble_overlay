@@ -7,6 +7,9 @@ import kotlinx.parcelize.Parcelize
 /** BubbleOptions is the class that contains the options for the bubble.
  * @param bubbleIcon The icon of the bubble.
  * @param closeIcon The icon of the close button.
+ * @param bubbleIconAsset The APK path of a Flutter asset used as the bubble icon (takes precedence over [bubbleIcon]).
+ * @param closeIconAsset The APK path of a Flutter asset used as the close icon (takes precedence over [closeIcon]).
+ * @param closeIconSize The size of the close button, defaults to [bubbleSize].
  * @param startLocationX The x coordinate of the bubble.
  * @param startLocationY The y coordinate of the bubble.
  * @param bubbleSize The size of the bubble.
@@ -34,14 +37,18 @@ data class BubbleOptions(
     val enableBottomShadow: Boolean?,
     val keepAliveWhenAppExit: Boolean?,
     val openAppOnTap: Boolean?,
+    val bubbleIconAsset: String?,
+    val closeIconAsset: String?,
+    val closeIconSize: Double?,
 ) : Parcelable {
     companion object {
         /**
          * Get the bubble options from the method call.
          * @param call The method call.
+         * @param resolveAsset Maps a Flutter asset name to its path inside the APK.
          * @return The bubble options.
          */
-        fun fromMethodCall(call: MethodCall): BubbleOptions {
+        fun fromMethodCall(call: MethodCall, resolveAsset: (String) -> String): BubbleOptions {
             return BubbleOptions(
                 call.argument(Constants.BUBBLE_ICON),
                 call.argument(Constants.CLOSE_ICON),
@@ -55,7 +62,10 @@ data class BubbleOptions(
                 call.argument(Constants.ENABLE_ANIMATE_TO_EDGE),
                 call.argument(Constants.ENABLE_BOTTOM_SHADOW),
                 call.argument(Constants.KEEP_ALIVE_WHEN_APP_EXIT),
-                call.argument(Constants.OPEN_APP_ON_TAP)
+                call.argument(Constants.OPEN_APP_ON_TAP),
+                call.argument<String>(Constants.BUBBLE_ICON_ASSET)?.let(resolveAsset),
+                call.argument<String>(Constants.CLOSE_ICON_ASSET)?.let(resolveAsset),
+                call.argument(Constants.CLOSE_ICON_SIZE)
             )
         }
     }

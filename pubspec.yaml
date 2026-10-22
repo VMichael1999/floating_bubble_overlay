@@ -1,6 +1,6 @@
 name: floating_bubble_overlay
 description: "Customizable Messenger-style floating bubble (chat head) overlay for Flutter on Android, with drag-to-close, tap and move callbacks, and a foreground service notification."
-version: 1.0.6
+version: 1.1.0
 homepage: https://github.com/MICHAELVM01/floating_bubble_overlay
 repository: https://github.com/MICHAELVM01/floating_bubble_overlay
 issue_tracker: https://github.com/MICHAELVM01/floating_bubble_overlay/issues

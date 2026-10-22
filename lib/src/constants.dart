@@ -21,8 +21,12 @@ class Constants {
   static const isRunning = 'isRunning';
   static const startBubble = 'startBubble';
   static const stopBubble = 'stopBubble';
+  static const hideBubble = 'hideBubble';
+  static const showBubble = 'showBubble';
+  static const isBubbleVisible = 'isBubbleVisible';
   static const onTap = 'onTap';
   static const onTapDown = 'onTapDown';
   static const onTapUp = 'onTapUp';
   static const onMove = 'onMove';
+  static const onClose = 'onClose';
 }

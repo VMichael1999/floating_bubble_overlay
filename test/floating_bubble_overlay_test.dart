@@ -1,27 +1,27 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:floating_bubble_overlay/floating_bubble_overlay.dart';
-import 'package:floating_bubble_overlay/src/method_channel/dash_bubble_method_channel.dart';
-import 'package:floating_bubble_overlay/src/method_channel/dash_bubble_platform_interface.dart';
+import 'package:floating_bubble_overlay/src/method_channel/floating_bubble_method_channel.dart';
+import 'package:floating_bubble_overlay/src/method_channel/floating_bubble_platform_interface.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  late MethodChannelDashBubble platform;
+  late MethodChannelFloatingBubbleOverlay platform;
   late List<MethodCall> calls;
   late Object? Function(MethodCall) handler;
 
   setUp(() {
-    platform = MethodChannelDashBubble();
+    platform = MethodChannelFloatingBubbleOverlay();
     platform.isSupportedPlatform = () => true;
-    DashBubblePlatform.instance = platform;
+    FloatingBubbleOverlayPlatform.instance = platform;
     calls = [];
     handler = (_) => true;
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(platform.methodChannel, (call) async {
-      calls.add(call);
-      return handler(call);
-    });
+          calls.add(call);
+          return handler(call);
+        });
   });
 
   tearDown(() {
@@ -32,22 +32,29 @@ void main() {
   Future<void> emit(String method, [Object? args]) async {
     await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .handlePlatformMessage(
-      platform.methodChannel.name,
-      platform.methodChannel.codec
-          .encodeMethodCall(MethodCall(method, args)),
-      (_) {},
-    );
+          platform.methodChannel.name,
+          platform.methodChannel.codec.encodeMethodCall(
+            MethodCall(method, args),
+          ),
+          (_) {},
+        );
   }
 
-  test('returns false on unsupported platforms without calling native', () async {
-    platform.isSupportedPlatform = () => false;
-    expect(await FloatingBubbleOverlay.instance.isRunning(), isFalse);
-    expect(calls, isEmpty);
-  });
+  test(
+    'returns false on unsupported platforms without calling native',
+    () async {
+      platform.isSupportedPlatform = () => false;
+      expect(await FloatingBubbleOverlay.instance.isRunning(), isFalse);
+      expect(calls, isEmpty);
+    },
+  );
 
   test('null native result is treated as false', () async {
     handler = (_) => null;
-    expect(await FloatingBubbleOverlay.instance.hasOverlayPermission(), isFalse);
+    expect(
+      await FloatingBubbleOverlay.instance.hasOverlayPermission(),
+      isFalse,
+    );
   });
 
   test('startBubble sends merged options', () async {
@@ -97,5 +104,53 @@ void main() {
   test('BubbleOptions validates values', () {
     expect(() => BubbleOptions(bubbleSize: 0), throwsAssertionError);
     expect(() => BubbleOptions(opacity: 2), throwsAssertionError);
+    expect(() => BubbleOptions(closeIconSize: 0), throwsAssertionError);
+  });
+
+  test('startBubble sends the 1.1.0 options', () async {
+    await FloatingBubbleOverlay.instance.startBubble(
+      bubbleOptions: const BubbleOptions(
+        bubbleIconAsset: 'assets/bubble.png',
+        closeIconAsset: 'assets/close.png',
+        closeIconSize: 48,
+      ),
+      notificationOptions: const NotificationOptions(
+        showStopAction: true,
+        stopActionLabel: 'Detener',
+      ),
+    );
+    final args = calls.single.arguments as Map;
+    expect(args['bubbleIconAsset'], 'assets/bubble.png');
+    expect(args['closeIconAsset'], 'assets/close.png');
+    expect(args['closeIconSize'], 48);
+    expect(args['notificationShowStopAction'], true);
+    expect(args['notificationStopActionLabel'], 'Detener');
+  });
+
+  test('defaults keep previous behavior', () {
+    final bubble = const BubbleOptions().toMap();
+    final notification = const NotificationOptions().toMap();
+    expect(bubble['bubbleIconAsset'], isNull);
+    expect(bubble['closeIconSize'], isNull);
+    expect(bubble['openAppOnTap'], true);
+    expect(notification['notificationShowStopAction'], false);
+  });
+
+  test('forwards onClose', () async {
+    var closes = 0;
+    await FloatingBubbleOverlay.instance.startBubble(onClose: () => closes++);
+    await emit('onClose');
+    expect(closes, 1);
+  });
+
+  test('hide, show and isBubbleVisible call native', () async {
+    expect(await FloatingBubbleOverlay.instance.hideBubble(), isTrue);
+    expect(await FloatingBubbleOverlay.instance.showBubble(), isTrue);
+    expect(await FloatingBubbleOverlay.instance.isBubbleVisible(), isTrue);
+    expect(calls.map((c) => c.method), [
+      'hideBubble',
+      'showBubble',
+      'isBubbleVisible',
+    ]);
   });
 }

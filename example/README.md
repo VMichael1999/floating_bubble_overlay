@@ -1,16 +1,22 @@
-# floating_bubble_overlay_example
+# floating_bubble_overlay example
 
-Demonstrates how to use the floating_bubble_overlay plugin.
+A playground for every feature of the plugin:
 
-## Getting Started
+- Request and check the overlay and notification permissions.
+- Start the bubble with icons from Flutter assets (`assets/bubble.png`, `assets/close.png`).
+- Hide / show the bubble without stopping the service.
+- Notification with a "Close bubble" button, and the `onClose` callback.
+- The bubble appears when you leave the app and hides when you come back.
 
-This project is a starting point for a Flutter application.
+## Run
 
-A few resources to get you started if this is your first Flutter project:
+```bash
+flutter run
+```
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## Integration tests (device or emulator)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```bash
+adb shell appops set com.example.floating_bubble_overlay_example SYSTEM_ALERT_WINDOW allow
+flutter test integration_test
+```

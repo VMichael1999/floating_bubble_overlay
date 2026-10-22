@@ -1,27 +1,28 @@
 import 'package:flutter/foundation.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
-import 'dash_bubble_method_channel.dart';
+import 'floating_bubble_method_channel.dart';
 import '../models/models.dart';
 
 /// The interface that platform implementations of floating_bubble_overlay must extend.
-abstract class DashBubblePlatform extends PlatformInterface {
-  /// Constructs a DashBubblePlatform.
-  DashBubblePlatform() : super(token: _token);
+abstract class FloatingBubbleOverlayPlatform extends PlatformInterface {
+  /// Constructs a FloatingBubbleOverlayPlatform.
+  FloatingBubbleOverlayPlatform() : super(token: _token);
 
   static final Object _token = Object();
 
-  static DashBubblePlatform _instance = MethodChannelDashBubble();
+  static FloatingBubbleOverlayPlatform _instance =
+      MethodChannelFloatingBubbleOverlay();
 
-  /// The default instance of [DashBubblePlatform] to use.
+  /// The default instance of [FloatingBubbleOverlayPlatform] to use.
   ///
-  /// Defaults to [MethodChannelDashBubble].
-  static DashBubblePlatform get instance => _instance;
+  /// Defaults to [MethodChannelFloatingBubbleOverlay].
+  static FloatingBubbleOverlayPlatform get instance => _instance;
 
   /// Platform-specific implementations should set this with their own
-  /// platform-specific class that extends [DashBubblePlatform] when
+  /// platform-specific class that extends [FloatingBubbleOverlayPlatform] when
   /// they register themselves.
-  static set instance(DashBubblePlatform instance) {
+  static set instance(FloatingBubbleOverlayPlatform instance) {
     PlatformInterface.verifyToken(instance, _token);
     _instance = instance;
   }
@@ -67,6 +68,7 @@ abstract class DashBubblePlatform extends PlatformInterface {
     Function(double x, double y)? onTapDown,
     Function(double x, double y)? onTapUp,
     Function(double x, double y)? onMove,
+    VoidCallback? onClose,
   }) async {
     throw UnimplementedError('startBubble() has not been implemented.');
   }
@@ -74,5 +76,20 @@ abstract class DashBubblePlatform extends PlatformInterface {
   /// Stop the bubble.
   Future<bool> stopBubble() async {
     throw UnimplementedError('stopBubble() has not been implemented.');
+  }
+
+  /// Hide the bubble without stopping the service.
+  Future<bool> hideBubble() async {
+    throw UnimplementedError('hideBubble() has not been implemented.');
+  }
+
+  /// Show the bubble again after [hideBubble].
+  Future<bool> showBubble() async {
+    throw UnimplementedError('showBubble() has not been implemented.');
+  }
+
+  /// Check if the bubble is running and visible.
+  Future<bool> isBubbleVisible() async {
+    throw UnimplementedError('isBubbleVisible() has not been implemented.');
   }
 }

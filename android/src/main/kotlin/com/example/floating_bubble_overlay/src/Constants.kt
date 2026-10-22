@@ -15,6 +15,7 @@ class Constants {
         const val ON_TAP_DOWN = "onTapDown"
         const val ON_TAP_UP = "onTapUp"
         const val ON_MOVE = "onMove"
+        const val ON_CLOSE = "onClose"
         const val X_AXIS_VALUE = "xAxisValue"
         const val Y_AXIS_VALUE = "yAxisValue"
 
@@ -26,6 +27,9 @@ class Constants {
         const val IS_RUNNING = "isRunning"
         const val START_BUBBLE = "startBubble"
         const val STOP_BUBBLE = "stopBubble"
+        const val HIDE_BUBBLE = "hideBubble"
+        const val SHOW_BUBBLE = "showBubble"
+        const val IS_BUBBLE_VISIBLE = "isBubbleVisible"
 
         // Bubble Options Arguments
         const val BUBBLE_ICON = "bubbleIcon"
@@ -41,6 +45,9 @@ class Constants {
         const val ENABLE_BOTTOM_SHADOW = "enableBottomShadow"
         const val KEEP_ALIVE_WHEN_APP_EXIT = "keepAliveWhenAppExit"
         const val OPEN_APP_ON_TAP = "openAppOnTap"
+        const val BUBBLE_ICON_ASSET = "bubbleIconAsset"
+        const val CLOSE_ICON_ASSET = "closeIconAsset"
+        const val CLOSE_ICON_SIZE = "closeIconSize"
 
         // Notification Options Arguments
         const val NOTIFICATION_ID = "notificationId"
@@ -49,5 +56,7 @@ class Constants {
         const val NOTIFICATION_ICON = "notificationIcon"
         const val NOTIFICATION_CHANNEL_ID = "notificationChannelId"
         const val NOTIFICATION_CHANNEL_NAME = "notificationChannelName"
+        const val NOTIFICATION_SHOW_STOP_ACTION = "notificationShowStopAction"
+        const val NOTIFICATION_STOP_ACTION_LABEL = "notificationStopActionLabel"
     }
 }

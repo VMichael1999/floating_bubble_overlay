@@ -3,25 +3,26 @@ import 'dart:developer';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
-import 'dash_bubble_platform_interface.dart';
+import 'floating_bubble_platform_interface.dart';
 import '../constants.dart';
 import '../models/models.dart';
 
-/// An implementation of [DashBubblePlatform] that uses method channels.
-class MethodChannelDashBubble extends DashBubblePlatform {
+/// An implementation of [FloatingBubbleOverlayPlatform] that uses method channels.
+class MethodChannelFloatingBubbleOverlay extends FloatingBubbleOverlayPlatform {
   /// The method channel used to interact with the native platform.
   @visibleForTesting
   final methodChannel = const MethodChannel(Constants.methodChannel);
 
   /// Whether the current platform is supported (Android only).
   @visibleForTesting
-  bool Function() isSupportedPlatform = () =>
-      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+  bool Function() isSupportedPlatform =
+      () => !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
 
   VoidCallback? _onTap;
   void Function(double x, double y)? _onTapDown;
   void Function(double x, double y)? _onTapUp;
   void Function(double x, double y)? _onMove;
+  VoidCallback? _onClose;
 
   bool _handlerRegistered = false;
 
@@ -35,8 +36,7 @@ class MethodChannelDashBubble extends DashBubblePlatform {
     if (!isSupportedPlatform()) return false;
 
     try {
-      return await methodChannel.invokeMethod<bool>(method, arguments) ??
-          false;
+      return await methodChannel.invokeMethod<bool>(method, arguments) ?? false;
     } on PlatformException catch (_) {
       logError(
         'PlatformException: $method\n\nPlease report this issue on GitHub via: https://github.com/MICHAELVM01/floating_bubble_overlay/issues/new',
@@ -67,6 +67,8 @@ class MethodChannelDashBubble extends DashBubblePlatform {
         _callWithCoordinates(_onTapUp, call.arguments);
       case Constants.onMove:
         _callWithCoordinates(_onMove, call.arguments);
+      case Constants.onClose:
+        _onClose?.call();
       default:
         throw MissingPluginException(
           'Method ${call.method} is not implemented',
@@ -127,17 +129,20 @@ class MethodChannelDashBubble extends DashBubblePlatform {
     Function(double x, double y)? onTapDown,
     Function(double x, double y)? onTapUp,
     Function(double x, double y)? onMove,
+    VoidCallback? onClose,
   }) async {
     final previousOnTap = _onTap;
     final previousOnTapDown = _onTapDown;
     final previousOnTapUp = _onTapUp;
     final previousOnMove = _onMove;
+    final previousOnClose = _onClose;
 
     _ensureHandlerRegistered();
     _onTap = onTap;
     _onTapDown = onTapDown;
     _onTapUp = onTapUp;
     _onMove = onMove;
+    _onClose = onClose;
 
     var started = false;
     try {
@@ -152,6 +157,7 @@ class MethodChannelDashBubble extends DashBubblePlatform {
         _onTapDown = previousOnTapDown;
         _onTapUp = previousOnTapUp;
         _onMove = previousOnMove;
+        _onClose = previousOnClose;
       }
     }
   }
@@ -160,6 +166,24 @@ class MethodChannelDashBubble extends DashBubblePlatform {
   @override
   Future<bool> stopBubble() async {
     return (await _invokeMethod(Constants.stopBubble));
+  }
+
+  /// Invokes the method channel to hide the bubble without stopping the service.
+  @override
+  Future<bool> hideBubble() async {
+    return (await _invokeMethod(Constants.hideBubble));
+  }
+
+  /// Invokes the method channel to show the bubble again.
+  @override
+  Future<bool> showBubble() async {
+    return (await _invokeMethod(Constants.showBubble));
+  }
+
+  /// Invokes the method channel to check if the bubble is running and visible.
+  @override
+  Future<bool> isBubbleVisible() async {
+    return (await _invokeMethod(Constants.isBubbleVisible));
   }
 
   /// Logs an error message.

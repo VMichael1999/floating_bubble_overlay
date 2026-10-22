@@ -1,3 +1,23 @@
+## 1.1.0
+### New
+- `BubbleOptions.bubbleIconAsset` / `closeIconAsset`: use images from your Flutter `assets/` as icons.
+- `BubbleOptions.closeIconSize`: the close icon no longer has to match the bubble size.
+- `hideBubble()`, `showBubble()` and `isBubbleVisible()`: hide the bubble without stopping the service.
+- `onClose` callback in `startBubble`: called when the user closes the bubble (drag to close or notification button).
+- `NotificationOptions.showStopAction` / `stopActionLabel`: optional "Stop" button in the notification.
+- Tapping the notification now opens the app.
+
+### Fixes
+- If Android killed the app process, the service came back without the bubble and `startBubble` returned `false` until the app was restarted. The bubble is now restored with the same options.
+- Crash (`Unable to create service`) when Android restarted the service after the overlay permission was revoked.
+- The notification channel used default importance (could make a sound); it is now created with low importance. Existing channels keep their importance: use a new `channelId` to get the new behavior.
+- Removed the JitPack repository the plugin injected into host apps.
+
+### Other
+- Example app: Flutter asset icons, hide/show, `onClose`, notification stop button, and the "bubble only while in background" pattern. Restored the missing light theme.
+- Integration tests running on a device/emulator and GitHub Actions CI.
+- README: events, API table, Google Play policy notes and troubleshooting.
+
 ## 1.0.6
 - **Fix:** `CloseBehavior`, `BubbleOptions` and `NotificationOptions` are now exported from `package:floating_bubble_overlay/floating_bubble_overlay.dart`.
 - **Fix:** `CloseBehavior.following` was silently behaving as `fixed`; both values now map explicitly to the native behaviors.

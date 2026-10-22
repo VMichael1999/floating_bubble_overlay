@@ -1,11 +1,15 @@
 package com.example.floating_bubble_overlay.src
 
 import android.app.Notification
-import android.app.Service
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Intent
-import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import android.os.Build
+import android.provider.Settings
 import androidx.core.app.NotificationCompat
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.torrydo.floatingbubbleview.BubbleBehavior
 import com.torrydo.floatingbubbleview.FloatingBubble
 import com.torrydo.floatingbubbleview.FloatingBubbleService
@@ -13,43 +17,113 @@ import com.torrydo.floatingbubbleview.Route
 
 /** BubbleService is the service that will be started when the bubble is started. */
 class BubbleService : FloatingBubbleService() {
-    private companion object {
+    companion object {
         /** Mirrors the index of `CloseBehavior.fixed` on the Dart side. */
-        const val CLOSE_BEHAVIOR_FIXED = 1
+        private const val CLOSE_BEHAVIOR_FIXED = 1
+
+        /** Intent action used by the notification "stop" button. */
+        const val ACTION_STOP = "com.example.floating_bubble_overlay.action.STOP"
+
+        /** The running service, if any. The plugin and the service share the same process. */
+        @Volatile
+        var instance: BubbleService? = null
+            private set
+
+        /** Set by [BubbleManager.stopBubble] so that [onDestroy] does not report an app-initiated stop as a user close. */
+        @Volatile
+        var stopRequestedByApp = false
     }
 
     private lateinit var bubbleOptions: BubbleOptions
     private lateinit var notificationOptions: NotificationOptions
 
+    /** Whether the bubble is currently shown (it can be hidden with [hide] without stopping the service). */
+    var isBubbleVisible = false
+        private set
+
+    override fun onCreate() {
+        // FloatingBubbleService.onCreate throws if the overlay permission was revoked, which happens
+        // when Android restarts the service after the permission has been removed.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
+            stopSelf()
+            return
+        }
+        super.onCreate()
+        instance = this
+        stopRequestedByApp = false
+    }
+
     /** This method is called when the service is started
      * It initializes the bubble with the options passed to from the intent and starts the service.
      */
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent != null) {
-            val bubbleOpts = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                intent.getParcelableExtra(Constants.BUBBLE_OPTIONS_INTENT_EXTRA, BubbleOptions::class.java)
+        if (instance !== this) return START_NOT_STICKY
+
+        if (intent?.action == ACTION_STOP) {
+            stopSelf()
+            return START_NOT_STICKY
+        }
+
+        val bubbleOpts = intent?.let {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                it.getParcelableExtra(Constants.BUBBLE_OPTIONS_INTENT_EXTRA, BubbleOptions::class.java)
             } else {
                 @Suppress("DEPRECATION")
-                intent.getParcelableExtra(Constants.BUBBLE_OPTIONS_INTENT_EXTRA)
-            }
-            
-            val notificationOpts = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                intent.getParcelableExtra(Constants.NOTIFICATION_OPTIONS_INTENT_EXTRA, NotificationOptions::class.java)
-            } else {
-                @Suppress("DEPRECATION")
-                intent.getParcelableExtra(Constants.NOTIFICATION_OPTIONS_INTENT_EXTRA)
-            }
-            
-            if (bubbleOpts != null && notificationOpts != null) {
-                bubbleOptions = bubbleOpts
-                notificationOptions = notificationOpts
-                
-                showBubbles()
-                showNotification()
+                it.getParcelableExtra(Constants.BUBBLE_OPTIONS_INTENT_EXTRA)
             }
         }
 
-        return super.onStartCommand(intent, flags, startId)
+        val notificationOpts = intent?.let {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                it.getParcelableExtra(Constants.NOTIFICATION_OPTIONS_INTENT_EXTRA, NotificationOptions::class.java)
+            } else {
+                @Suppress("DEPRECATION")
+                it.getParcelableExtra(Constants.NOTIFICATION_OPTIONS_INTENT_EXTRA)
+            }
+        }
+
+        if (bubbleOpts == null || notificationOpts == null) {
+            // Nothing to show (e.g. a restart without the original intent): do not linger as an empty service.
+            if (!::bubbleOptions.isInitialized) stopSelf()
+            return START_NOT_STICKY
+        }
+
+        if (!::bubbleOptions.isInitialized) {
+            bubbleOptions = bubbleOpts
+            notificationOptions = notificationOpts
+
+            // The overlay must be visible before going foreground (Android 15+ background start rules).
+            show()
+            showNotification()
+        }
+
+        // If Android kills the process, restart the service with the same options so the bubble comes back.
+        return START_REDELIVER_INTENT
+    }
+
+    override fun onDestroy() {
+        if (instance === this) {
+            instance = null
+            isBubbleVisible = false
+            if (!stopRequestedByApp) {
+                LocalBroadcastManager.getInstance(this).sendBroadcast(Intent(Constants.ON_CLOSE))
+            }
+            stopRequestedByApp = false
+            super.onDestroy()
+        }
+        // Otherwise onCreate bailed out before FloatingBubbleService was initialized: nothing to clean up.
+    }
+
+    /** Shows the bubble again after [hide]. */
+    fun show() {
+        showBubbles()
+        isBubbleVisible = true
+    }
+
+    /** Hides the bubble while keeping the service (and its notification) alive. */
+    fun hide() {
+        removeBubbles()
+        isBubbleVisible = false
     }
 
     /** This method is called when the service is created.
@@ -79,41 +153,52 @@ class BubbleService : FloatingBubbleService() {
     override fun channelName(): String =
         if (::notificationOptions.isInitialized) notificationOptions.channelName ?: "Floating Bubble" else "Floating Bubble"
 
+    /** Creates a low importance channel so the persistent notification is silent. */
+    override fun createNotificationChannel(channelId: String, channelName: String) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+
+        val channel = NotificationChannel(channelId, channelName, NotificationManager.IMPORTANCE_LOW).apply {
+            setShowBadge(false)
+            lockscreenVisibility = Notification.VISIBILITY_PRIVATE
+        }
+        getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+    }
+
     /** This method defines the main setup of the bubble. */
     override fun setupBubble(action: FloatingBubble.Action): FloatingBubble.Builder {
-        val bubbleIcon = if (!bubbleOptions.bubbleIcon.isNullOrBlank()) {
-            Helpers.getDrawableId(
-                this,
-                bubbleOptions.bubbleIcon,
-                getAppIconResId()
-            )
+        val bubbleSize = bubbleOptions.bubbleSize?.toInt() ?: 64
+        val closeSize = bubbleOptions.closeIconSize?.toInt() ?: bubbleSize
+
+        val builder = FloatingBubble.Builder(this)
+
+        val bubbleBitmap = Helpers.loadFlutterAsset(this, bubbleOptions.bubbleIconAsset)
+        if (bubbleBitmap != null) {
+            builder.bubble(bubbleBitmap, bubbleSize, bubbleSize)
         } else {
-            getAppIconResId()
+            val bubbleIcon = Helpers.getDrawableId(this, bubbleOptions.bubbleIcon, getAppIconResId())
+            builder.bubble(bubbleIcon, bubbleSize, bubbleSize)
         }
 
-        val closeIcon = Helpers.getDrawableId(
-            this,
-            bubbleOptions.closeIcon,
-            android.R.drawable.ic_menu_close_clear_cancel
-        )
-
-        return FloatingBubble.Builder(this)
-            .bubble(
-                bubbleIcon,
-                bubbleOptions.bubbleSize?.toInt() ?: 64,
-                bubbleOptions.bubbleSize?.toInt() ?: 64
+        val closeBitmap = Helpers.loadFlutterAsset(this, bubbleOptions.closeIconAsset)
+        if (closeBitmap != null) {
+            val px = Helpers.dpToPx(closeSize)
+            builder.closeBubble(Bitmap.createScaledBitmap(closeBitmap, px, px, true))
+        } else {
+            val closeIcon = Helpers.getDrawableId(
+                this,
+                bubbleOptions.closeIcon,
+                android.R.drawable.ic_menu_close_clear_cancel
             )
+            builder.closeBubble(closeIcon, closeSize, closeSize)
+        }
+
+        return builder
             .bubbleStyle(null)
             .startLocation(
                 bubbleOptions.startLocationX?.toInt() ?: 0,
                 bubbleOptions.startLocationY?.toInt() ?: 0
             )
             .enableAnimateToEdge(bubbleOptions.enableAnimateToEdge ?: true)
-            .closeBubble(
-                closeIcon,
-                bubbleOptions.bubbleSize?.toInt() ?: 64,
-                bubbleOptions.bubbleSize?.toInt() ?: 64
-            )
             .closeBubbleStyle(null)
             .enableCloseBubble(bubbleOptions.enableClose ?: true)
             .bottomBackground(bubbleOptions.enableBottomShadow ?: false)
@@ -133,26 +218,34 @@ class BubbleService : FloatingBubbleService() {
         val notificationTitle =
             notificationOptions.title ?: Helpers.getApplicationName(this)
 
-        val notificationIcon = if (!notificationOptions.icon.isNullOrBlank()) {
-            Helpers.getDrawableId(
-                this,
-                notificationOptions.icon,
-                getAppIconResId()
-            )
-        } else {
-            getAppIconResId()
-        }
+        val notificationIcon = Helpers.getDrawableId(this, notificationOptions.icon, getAppIconResId())
 
-        val notification = NotificationCompat.Builder(this, channelId())
+        val builder = NotificationCompat.Builder(this, channelId())
             .setOngoing(true)
             .setContentTitle(notificationTitle)
             .setContentText(notificationOptions.body)
             .setSmallIcon(notificationIcon)
-            .setPriority(NotificationCompat.PRIORITY_MIN)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
             .setCategory(Notification.CATEGORY_SERVICE)
-            .build()
 
-        notify(notification)
+        // Tapping the notification brings the app to the foreground.
+        packageManager.getLaunchIntentForPackage(packageName)?.let { launchIntent ->
+            launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            builder.setContentIntent(
+                PendingIntent.getActivity(this, 0, launchIntent, PendingIntent.FLAG_IMMUTABLE)
+            )
+        }
+
+        if (notificationOptions.showStopAction == true) {
+            val stopIntent = Intent(this, BubbleService::class.java).setAction(ACTION_STOP)
+            builder.addAction(
+                0,
+                notificationOptions.stopActionLabel ?: "Stop",
+                PendingIntent.getService(this, 1, stopIntent, PendingIntent.FLAG_IMMUTABLE)
+            )
+        }
+
+        notify(builder.build())
     }
 
     /** This method is called when the app is closed.
@@ -162,6 +255,7 @@ class BubbleService : FloatingBubbleService() {
         super.onTaskRemoved(rootIntent)
 
         if (::bubbleOptions.isInitialized && bubbleOptions.keepAliveWhenAppExit != true) {
+            stopRequestedByApp = true
             stopSelf()
         }
     }

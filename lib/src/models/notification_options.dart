@@ -13,10 +13,21 @@ class NotificationOptions {
   final String? icon;
 
   /// The channel id of the service notification.
+  ///
+  /// Android does not let apps change the importance of an existing channel, so
+  /// use a new id if a previous version of your app already created this channel.
   final String channelId;
 
   /// The channel name of the service notification.
   final String channelName;
+
+  /// Whether to show a button in the notification that closes the bubble.
+  ///
+  /// Closing the bubble this way triggers the `onClose` callback.
+  final bool showStopAction;
+
+  /// The label of the stop button shown when [showStopAction] is `true`.
+  final String stopActionLabel;
 
   const NotificationOptions({
     this.id = 101,
@@ -25,6 +36,8 @@ class NotificationOptions {
     this.icon,
     this.channelId = 'bubble_notification',
     this.channelName = 'Bubble Notification',
+    this.showStopAction = false,
+    this.stopActionLabel = 'Stop',
   });
 
   /// Serializes the options for the native side.
@@ -36,6 +49,8 @@ class NotificationOptions {
       'notificationIcon': icon,
       'notificationChannelId': channelId,
       'notificationChannelName': channelName,
+      'notificationShowStopAction': showStopAction,
+      'notificationStopActionLabel': stopActionLabel,
     };
   }
 }

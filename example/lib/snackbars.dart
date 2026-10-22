@@ -34,7 +34,7 @@ class SnackBars {
             color: Colors.white,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: backgroundColor.withOpacity(0.18),
+              color: backgroundColor.withValues(alpha: 0.18),
               width: 1,
             ),
           ),
@@ -58,7 +58,7 @@ class SnackBars {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: backgroundColor.withOpacity(0.12),
+                  color: backgroundColor.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(

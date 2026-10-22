@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart' show VoidCallback;
 
-import 'src/method_channel/dash_bubble_platform_interface.dart';
+import 'src/method_channel/floating_bubble_platform_interface.dart';
 import 'src/models/models.dart';
 
 export 'src/enums/enums.dart';
@@ -24,7 +24,7 @@ class FloatingBubbleOverlay {
   ///
   /// In Android versions prior to `Android 6.0 (M)`, this method will return `true` without asking the user.
   Future<bool> requestOverlayPermission() {
-    return DashBubblePlatform.instance.requestOverlayPermission();
+    return FloatingBubbleOverlayPlatform.instance.requestOverlayPermission();
   }
 
   /// Check if draw over other apps (overlay) permission is granted or not.
@@ -33,7 +33,7 @@ class FloatingBubbleOverlay {
   ///
   /// In Android versions prior to `Android 6.0 (M)`, this method will always return `true`.
   Future<bool> hasOverlayPermission() {
-    return DashBubblePlatform.instance.hasOverlayPermission();
+    return FloatingBubbleOverlayPlatform.instance.hasOverlayPermission();
   }
 
   /// Request post notifications permission (Used to customize the service notification)
@@ -47,7 +47,8 @@ class FloatingBubbleOverlay {
   ///
   /// In Android versions prior to `Android 13 (Tiramisu)`, this method will return `true` without asking the user.
   Future<bool> requestPostNotificationsPermission() {
-    return DashBubblePlatform.instance.requestPostNotificationsPermission();
+    return FloatingBubbleOverlayPlatform.instance
+        .requestPostNotificationsPermission();
   }
 
   /// Check if the post notifications permission is granted or not.
@@ -56,7 +57,8 @@ class FloatingBubbleOverlay {
   ///
   /// In Android versions prior to `Android 13 (Tiramisu)`, this method will always return `true`.
   Future<bool> hasPostNotificationsPermission() {
-    return DashBubblePlatform.instance.hasPostNotificationsPermission();
+    return FloatingBubbleOverlayPlatform.instance
+        .hasPostNotificationsPermission();
   }
 
   /// Check if the bubble is currently running.
@@ -69,7 +71,7 @@ class FloatingBubbleOverlay {
   ///
   /// If the bubble is running, you can stop it by calling [stopBubble].
   Future<bool> isRunning() {
-    return DashBubblePlatform.instance.isRunning();
+    return FloatingBubbleOverlayPlatform.instance.isRunning();
   }
 
   /// Start the bubble.
@@ -90,6 +92,12 @@ class FloatingBubbleOverlay {
   ///
   /// [onMove] is an optional callback that will be called when the bubble is moved, it will receive the new `x` and `y` coordinates of the bubble after it is moved.
   ///
+  /// [onClose] is an optional callback that will be called when the user closes the bubble,
+  /// either by dragging it to the close button or with the notification stop button.
+  /// It is not called when the app calls [stopBubble].
+  ///
+  /// Callbacks are only delivered while the Flutter app is alive. If the bubble outlives the app
+  /// (see [BubbleOptions.keepAliveWhenAppExit]), events that happen after the app is closed are lost.
   Future<bool> startBubble({
     BubbleOptions? bubbleOptions,
     NotificationOptions? notificationOptions,
@@ -97,14 +105,16 @@ class FloatingBubbleOverlay {
     Function(double x, double y)? onTapDown,
     Function(double x, double y)? onTapUp,
     Function(double x, double y)? onMove,
+    VoidCallback? onClose,
   }) {
-    return DashBubblePlatform.instance.startBubble(
+    return FloatingBubbleOverlayPlatform.instance.startBubble(
       bubbleOptions: bubbleOptions,
       notificationOptions: notificationOptions,
       onTap: onTap,
       onTapDown: onTapDown,
       onTapUp: onTapUp,
       onMove: onMove,
+      onClose: onClose,
     );
   }
 
@@ -114,6 +124,28 @@ class FloatingBubbleOverlay {
   ///
   /// If the bubble is not running, this method will return `false`.
   Future<bool> stopBubble() {
-    return DashBubblePlatform.instance.stopBubble();
+    return FloatingBubbleOverlayPlatform.instance.stopBubble();
+  }
+
+  /// Hide the bubble without stopping the service.
+  ///
+  /// The service and its notification stay alive, so the bubble can be shown again
+  /// instantly with [showBubble], keeping its callbacks.
+  ///
+  /// Returns `false` if the bubble is not running or is already hidden.
+  Future<bool> hideBubble() {
+    return FloatingBubbleOverlayPlatform.instance.hideBubble();
+  }
+
+  /// Show the bubble again after [hideBubble].
+  ///
+  /// Returns `false` if the bubble is not running or is already visible.
+  Future<bool> showBubble() {
+    return FloatingBubbleOverlayPlatform.instance.showBubble();
+  }
+
+  /// Check if the bubble is running and currently visible (not hidden with [hideBubble]).
+  Future<bool> isBubbleVisible() {
+    return FloatingBubbleOverlayPlatform.instance.isBubbleVisible();
   }
 }

@@ -30,6 +30,7 @@ class FloatingBubbleOverlayPlugin :
     private var channel: MethodChannel? = null
     private var broadcastListener: BroadcastListener? = null
     private var bubbleManager: BubbleManager? = null
+    private var flutterAssets: FlutterPlugin.FlutterAssets? = null
 
     /** Result of the permission request that is currently waiting for the user's answer. */
     private var pendingResult: MethodChannel.Result? = null
@@ -37,6 +38,7 @@ class FloatingBubbleOverlayPlugin :
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         val context = binding.applicationContext
         appContext = context
+        flutterAssets = binding.flutterAssets
 
         val methodChannel = MethodChannel(binding.binaryMessenger, Constants.METHOD_CHANNEL)
         methodChannel.setMethodCallHandler(this)
@@ -51,6 +53,7 @@ class FloatingBubbleOverlayPlugin :
             addAction(Constants.ON_TAP_DOWN)
             addAction(Constants.ON_TAP_UP)
             addAction(Constants.ON_MOVE)
+            addAction(Constants.ON_CLOSE)
         }
         LocalBroadcastManager.getInstance(context).registerReceiver(listener, intentFilter)
     }
@@ -86,13 +89,24 @@ class FloatingBubbleOverlayPlugin :
 
                 Constants.START_BUBBLE -> result.success(
                     manager.startBubble(
-                        BubbleOptions.fromMethodCall(call),
+                        BubbleOptions.fromMethodCall(call) { asset ->
+                            flutterAssets?.getAssetFilePathByName(asset) ?: asset
+                        },
                         NotificationOptions.fromMethodCall(call)
                     )
                 )
 
                 Constants.STOP_BUBBLE ->
                     result.success(manager.stopBubble())
+
+                Constants.HIDE_BUBBLE ->
+                    result.success(manager.hideBubble())
+
+                Constants.SHOW_BUBBLE ->
+                    result.success(manager.showBubble())
+
+                Constants.IS_BUBBLE_VISIBLE ->
+                    result.success(manager.isBubbleVisible())
 
                 else -> result.notImplemented()
             }
@@ -135,6 +149,7 @@ class FloatingBubbleOverlayPlugin :
         broadcastListener = null
         bubbleManager = null
         appContext = null
+        flutterAssets = null
         pendingResult = null
     }
 

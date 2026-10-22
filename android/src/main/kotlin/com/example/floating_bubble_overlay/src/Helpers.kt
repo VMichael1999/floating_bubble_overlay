@@ -1,6 +1,8 @@
 package com.example.floating_bubble_overlay.src
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.content.res.Resources
 import android.util.Log
 
@@ -36,6 +38,29 @@ class Helpers {
             } else {
                 identifier
             }
+        }
+
+        /**
+         * Decode a Flutter asset bundled in the APK.
+         * @param context The context of the application.
+         * @param assetPath The asset path inside the APK (already resolved with FlutterAssets).
+         * @return The decoded bitmap, or null if [assetPath] is null or cannot be decoded.
+         */
+        fun loadFlutterAsset(context: Context, assetPath: String?): Bitmap? {
+            if (assetPath.isNullOrBlank()) return null
+
+            val bitmap = try {
+                context.assets.open(assetPath).use { BitmapFactory.decodeStream(it) }
+            } catch (e: Exception) {
+                null
+            }
+            if (bitmap == null) Log.w(Constants.ERROR_TAG, "Could not load Flutter asset $assetPath")
+            return bitmap
+        }
+
+        /** Convert density-independent pixels (dp) to pixels (px). */
+        fun dpToPx(dp: Int): Int {
+            return (dp * Resources.getSystem().displayMetrics.density).toInt()
         }
 
         /** Convert pixels (px) to density-independent pixels (dp).

@@ -2,11 +2,28 @@ import '../enums/enums.dart';
 
 /// [BubbleOptions] is a class that contains all the customizable options for the bubble passed to the `FloatingBubbleOverlay.startBubble` method.
 class BubbleOptions {
-  /// The icon of the bubble.
+  /// The icon of the bubble: the name of a drawable resource of the Android app, without extension.
+  ///
+  /// Defaults to the app icon. Ignored when [bubbleIconAsset] is set.
   final String? bubbleIcon;
 
-  /// The icon of the close button.
+  /// The icon of the close button: the name of a drawable resource of the Android app, without extension.
+  ///
+  /// Ignored when [closeIconAsset] is set.
   final String? closeIcon;
+
+  /// A Flutter asset (declared in `pubspec.yaml`) used as the bubble icon, e.g. `assets/bubble.png`.
+  ///
+  /// Takes precedence over [bubbleIcon]. Falls back to [bubbleIcon] or the app icon if it cannot be loaded.
+  final String? bubbleIconAsset;
+
+  /// A Flutter asset (declared in `pubspec.yaml`) used as the close icon, e.g. `assets/close.png`.
+  ///
+  /// Takes precedence over [closeIcon].
+  final String? closeIconAsset;
+
+  /// The size of the close button (dp). Defaults to [bubbleSize].
+  final double? closeIconSize;
 
   /// The initial starting position of the bubble on the x axis (in logical pixels, dp).
   final double startLocationX;
@@ -44,6 +61,9 @@ class BubbleOptions {
   const BubbleOptions({
     this.bubbleIcon,
     this.closeIcon,
+    this.bubbleIconAsset,
+    this.closeIconAsset,
+    this.closeIconSize,
     this.startLocationX = 0,
     this.startLocationY = 200,
     this.bubbleSize = 60,
@@ -56,13 +76,20 @@ class BubbleOptions {
     this.keepAliveWhenAppExit = false,
     this.openAppOnTap = true,
   }) : assert(bubbleSize > 0, 'bubbleSize must be greater than 0'),
-       assert(opacity >= 0 && opacity <= 1, 'opacity must be between 0 and 1');
+       assert(opacity >= 0 && opacity <= 1, 'opacity must be between 0 and 1'),
+       assert(
+         closeIconSize == null || closeIconSize > 0,
+         'closeIconSize must be greater than 0',
+       );
 
   /// Serializes the options for the native side.
   Map<String, dynamic> toMap() {
     return {
       'bubbleIcon': bubbleIcon,
       'closeIcon': closeIcon,
+      'bubbleIconAsset': bubbleIconAsset,
+      'closeIconAsset': closeIconAsset,
+      'closeIconSize': closeIconSize,
       'startLocationX': startLocationX,
       'startLocationY': startLocationY,
       'bubbleSize': bubbleSize,

@@ -139,9 +139,33 @@ class BubbleManager(private val context: Context) {
     fun stopBubble(): Boolean {
         if (!FloatingBubbleService.isRunning()) return false
 
+        BubbleService.stopRequestedByApp = true
         val intent = Intent(context, BubbleService::class.java)
         context.stopService(intent)
 
         return true
     }
+
+    /** Hide the bubble without stopping the service.
+     * @return true if the bubble was hidden, false if the bubble is not running or already hidden.
+     */
+    fun hideBubble(): Boolean {
+        val service = BubbleService.instance ?: return false
+        if (!service.isBubbleVisible) return false
+        service.hide()
+        return true
+    }
+
+    /** Show the bubble again after [hideBubble].
+     * @return true if the bubble was shown, false if the bubble is not running or already visible.
+     */
+    fun showBubble(): Boolean {
+        val service = BubbleService.instance ?: return false
+        if (service.isBubbleVisible) return false
+        service.show()
+        return true
+    }
+
+    /** Check if the bubble is running and visible. */
+    fun isBubbleVisible(): Boolean = BubbleService.instance?.isBubbleVisible == true
 }
