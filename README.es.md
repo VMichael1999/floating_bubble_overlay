@@ -1,4 +1,7 @@
-<img src="doc/fondo.png" width="100%" alt="Floating Bubble Overlay banner" />
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="doc/banner_dark.png">
+  <img src="doc/banner_light.png" width="100%" alt="Floating Bubble Overlay banner" />
+</picture>
 
 <h2 align="center">
   Floating Bubble Overlay
