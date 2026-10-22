@@ -7,11 +7,12 @@ import android.graphics.BitmapShader
 import android.graphics.Canvas
 import android.graphics.Matrix
 import android.graphics.Paint
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffColorFilter
 import android.graphics.Path
 import android.graphics.RectF
 import android.graphics.Shader
 import androidx.core.content.ContextCompat
-import androidx.core.graphics.drawable.toBitmap
 import kotlin.math.max
 import kotlin.math.min
 
@@ -73,10 +74,27 @@ object IconComposer {
         return out
     }
 
+    /** Return a copy of [icon] where every visible pixel is painted with [color], keeping its alpha. */
+    fun tint(icon: Bitmap, color: Int): Bitmap {
+        val out = Bitmap.createBitmap(icon.width, icon.height, Bitmap.Config.ARGB_8888)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply {
+            colorFilter = PorterDuffColorFilter(color, PorterDuff.Mode.SRC_IN)
+        }
+        // Draw into an explicit destination so the bitmaps' densities cannot rescale the icon.
+        Canvas(out).drawBitmap(icon, null, RectF(0f, 0f, icon.width.toFloat(), icon.height.toFloat()), paint)
+        return out
+    }
+
     /** Render a drawable resource (e.g. the app icon) into a [sizePx] x [sizePx] bitmap. */
     fun drawableToBitmap(context: Context, drawableId: Int, sizePx: Int): Bitmap? {
         return try {
-            ContextCompat.getDrawable(context, drawableId)?.toBitmap(sizePx, sizePx)
+            val drawable = ContextCompat.getDrawable(context, drawableId) ?: return null
+            // Render into a new bitmap instead of Drawable.toBitmap(), which may return the
+            // resource bitmap with its own density (e.g. xhdpi) and get rescaled when drawn.
+            Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888).also {
+                drawable.setBounds(0, 0, sizePx, sizePx)
+                drawable.draw(Canvas(it))
+            }
         } catch (e: Exception) {
             null
         }

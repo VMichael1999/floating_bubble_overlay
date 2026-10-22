@@ -192,4 +192,13 @@ void main() {
     expect(() => BubbleBackground(padding: -1), throwsAssertionError);
     expect(() => BubbleBackground(borderWidth: -1), throwsAssertionError);
   });
+
+  test('closeIconColor is sent as ARGB', () async {
+    await FloatingBubbleOverlay.instance.startBubble(
+      bubbleOptions: const BubbleOptions(closeIconColor: Color(0xFFD32F2F)),
+    );
+    final args = calls.single.arguments as Map;
+    expect(args['closeIconColor'], 0xFFD32F2F);
+    expect(const BubbleOptions().toMap()['closeIconColor'], isNull);
+  });
 }

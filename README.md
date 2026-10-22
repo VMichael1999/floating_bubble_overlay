@@ -32,6 +32,7 @@ It is built on top of [Floating-Bubble-View](https://github.com/TorryDo/Floating
 - ✋ **Drag** the bubble → shows a close "X" zone (`following` or `fixed`)
 - 🖼 **Icons from your Flutter `assets/`** or Android drawables (falls back to your app icon)
 - 🎨 **Optional background** behind the icon: circle, square or rounded square, with a color, an image and a border
+- ❌ **Customizable close button**: image, size, tint color and background
 - 👁 **Hide / show** the bubble without stopping the service
 - 🔔 **Events**: tap, tap down / up, move and **close by the user**
 - 🛎 **Silent foreground notification** that opens your app, with an optional **"Stop" button**
@@ -111,6 +112,21 @@ const BubbleOptions(
 | `padding` | Space between the edge and the icon (dp) | `6` |
 | `cornerRadius` | Corner radius for `roundedSquare` (dp) | `12` |
 | `borderColor` / `borderWidth` | Border (dp); none when the color is `null` or the width is `0` | none / `0` |
+
+### Close button
+
+The "X" shown while dragging is customizable too: use an image (`closeIconAsset` / `closeIcon`), recolor the default "X" with `closeIconColor`, and/or draw it on a `closeIconBackground`:
+
+```dart
+const BubbleOptions(
+  closeIconColor: Color(0xFFFFFFFF),        // white "X"...
+  closeIconBackground: BubbleBackground(    // ...on a red circle
+    color: Color(0xFFD32F2F),
+    padding: 4,
+  ),
+  closeIconSize: 56,
+)
+```
 
 > The notification `icon` must be a drawable. Android draws small notification icons as a **white silhouette**, so use a monochrome icon with transparency.
 
@@ -220,6 +236,7 @@ Callbacks are delivered while your Flutter app is alive. If the bubble outlives 
 | `bubbleSize` | Bubble width and height (dp), must be `> 0` | `60` |
 | `closeIconSize` | Close icon width and height (dp) | `bubbleSize` |
 | `bubbleBackground` / `closeIconBackground` | Optional [background](#background-shape-color-image) behind the icon | none |
+| `closeIconColor` | Tint color for the close icon ([details](#close-button)) | none |
 | `startLocationX` / `startLocationY` | Initial position (dp) | `0` / `200` |
 | `opacity` | Transparency, `0.0` → `1.0` | `1.0` |
 | `enableClose` | Show the close "X" while dragging | `true` |

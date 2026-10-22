@@ -1,3 +1,5 @@
+import 'package:flutter/painting.dart' show Color;
+
 import '../enums/enums.dart';
 import 'bubble_background.dart';
 
@@ -33,6 +35,10 @@ class BubbleOptions {
 
   /// An optional background drawn behind the close icon.
   final BubbleBackground? closeIconBackground;
+
+  /// Tints the close icon with this color, e.g. to recolor the default "X"
+  /// without creating an image. Works best with single-color icons.
+  final Color? closeIconColor;
 
   /// The initial starting position of the bubble on the x axis (in logical pixels, dp).
   final double startLocationX;
@@ -75,6 +81,7 @@ class BubbleOptions {
     this.closeIconSize,
     this.bubbleBackground,
     this.closeIconBackground,
+    this.closeIconColor,
     this.startLocationX = 0,
     this.startLocationY = 200,
     this.bubbleSize = 60,
@@ -103,6 +110,7 @@ class BubbleOptions {
       'closeIconSize': closeIconSize,
       'bubbleBackground': bubbleBackground?.toMap(),
       'closeIconBackground': closeIconBackground?.toMap(),
+      'closeIconColor': closeIconColor?.toARGB32(),
       'startLocationX': startLocationX,
       'startLocationY': startLocationY,
       'bubbleSize': bubbleSize,

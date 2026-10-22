@@ -3,6 +3,7 @@
 - `BubbleOptions.bubbleIconAsset` / `closeIconAsset`: use images from your Flutter `assets/` as icons.
 - `BubbleOptions.closeIconSize`: the close icon no longer has to match the bubble size.
 - `BubbleOptions.bubbleBackground` / `closeIconBackground`: optional background behind the icon (`BubbleShape.circle`, `square`, `roundedSquare`) with a color, an image asset, padding and a border. Without it, icons are drawn as before.
+- `BubbleOptions.closeIconColor`: recolor the close icon (e.g. the default "X") without creating an image.
 - `hideBubble()`, `showBubble()` and `isBubbleVisible()`: hide the bubble without stopping the service.
 - `onClose` callback in `startBubble`: called when the user closes the bubble (drag to close or notification button).
 - `NotificationOptions.showStopAction` / `stopActionLabel`: optional "Stop" button in the notification.
@@ -15,7 +16,7 @@
 - Removed the JitPack repository the plugin injected into host apps.
 
 ### Other
-- Example app: app icon / asset icon switch, background shape and fill options, Flutter asset icons, hide/show, `onClose`, notification stop button, and the "bubble only while in background" pattern. Restored the missing light theme.
+- Example app: app icon / asset icon switch, background shape and fill options, close icon styles, Flutter asset icons, hide/show, `onClose`, notification stop button, and the "bubble only while in background" pattern. Restored the missing light theme.
 - Integration tests running on a device/emulator and GitHub Actions CI.
 - README: events, API table, Google Play policy notes and troubleshooting.
 

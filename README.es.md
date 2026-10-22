@@ -32,6 +32,7 @@ Está construido sobre [Floating-Bubble-View](https://github.com/TorryDo/Floatin
 - ✋ **Arrastra** la burbuja → muestra una zona "X" para cerrarla (`following` o `fixed`)
 - 🖼 **Iconos desde tus `assets/` de Flutter** o drawables de Android (si no, usa el icono de tu app)
 - 🎨 **Fondo opcional** detrás del icono: círculo, cuadrado o cuadrado redondeado, con color, imagen y borde
+- ❌ **Botón de cierre personalizable**: imagen, tamaño, color y fondo
 - 👁 **Ocultar / mostrar** la burbuja sin detener el servicio
 - 🔔 **Eventos**: toque, presionar / soltar, mover y **cierre por el usuario**
 - 🛎 **Notificación silenciosa** del servicio que abre tu app, con un botón **"Detener"** opcional
@@ -111,6 +112,21 @@ const BubbleOptions(
 | `padding` | Espacio entre el borde y el icono (dp) | `6` |
 | `cornerRadius` | Radio de las esquinas para `roundedSquare` (dp) | `12` |
 | `borderColor` / `borderWidth` | Borde (dp); no se dibuja si el color es `null` o el ancho es `0` | ninguno / `0` |
+
+### Botón de cierre
+
+La "X" que aparece al arrastrar también se puede personalizar: usa una imagen (`closeIconAsset` / `closeIcon`), cambia el color de la "X" por defecto con `closeIconColor` y/o dibújala sobre un `closeIconBackground`:
+
+```dart
+const BubbleOptions(
+  closeIconColor: Color(0xFFFFFFFF),        // white "X"...
+  closeIconBackground: BubbleBackground(    // ...on a red circle
+    color: Color(0xFFD32F2F),
+    padding: 4,
+  ),
+  closeIconSize: 56,
+)
+```
 
 > El `icon` de la notificación debe ser un drawable. Android dibuja los iconos pequeños de notificación como una **silueta blanca**, así que usa un icono monocromo con transparencia.
 
@@ -220,6 +236,7 @@ Los callbacks llegan mientras tu app de Flutter está viva. Si la burbuja sobrev
 | `bubbleSize` | Ancho y alto de la burbuja (dp), debe ser `> 0` | `60` |
 | `closeIconSize` | Ancho y alto del icono de cierre (dp) | `bubbleSize` |
 | `bubbleBackground` / `closeIconBackground` | [Fondo](#fondo-forma-color-imagen) opcional detrás del icono | ninguno |
+| `closeIconColor` | Color para teñir el icono de cierre ([detalles](#botón-de-cierre)) | ninguno |
 | `startLocationX` / `startLocationY` | Posición inicial (dp) | `0` / `200` |
 | `opacity` | Transparencia, `0.0` → `1.0` | `1.0` |
 | `enableClose` | Mostrar la "X" de cierre al arrastrar | `true` |

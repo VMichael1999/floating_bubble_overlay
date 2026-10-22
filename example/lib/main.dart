@@ -75,6 +75,27 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   /// Index in [_fills] of the background fill.
   int _fill = 0;
 
+  /// Index in [_closeStyles] of the close button style.
+  int _closeStyle = 1;
+
+  /// Ways to customize the close button (new in 1.1.0).
+  static const _closeStyles = [
+    (name: 'Default', asset: null, color: null, background: null),
+    (name: 'Asset', asset: 'assets/close.png', color: null, background: null),
+    (name: 'Tinted', asset: null, color: Color(0xFFD32F2F), background: null),
+    (
+      name: 'Circle',
+      asset: null,
+      color: Color(0xFFFFFFFF),
+      background: BubbleBackground(
+        color: Color(0xFFD32F2F),
+        padding: 4,
+        borderColor: Color(0xFFFFFFFF),
+        borderWidth: 3,
+      ),
+    ),
+  ];
+
   static const _shapeNames = {
     null: 'None',
     BubbleShape.circle: 'Circle',
@@ -111,7 +132,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     bubbleIconAsset: _useAssetIcon ? 'assets/bubble.png' : null,
     // Optional background behind the icon (new in 1.1.0).
     bubbleBackground: _background,
-    closeIconAsset: 'assets/close.png',
+    // The close button: default "X", an asset, a tint color and/or a background.
+    closeIconAsset: _closeStyles[_closeStyle].asset,
+    closeIconColor: _closeStyles[_closeStyle].color,
+    closeIconBackground: _closeStyles[_closeStyle].background,
     closeIconSize: 56,
     startLocationX: 0,
     startLocationY: 100,
@@ -274,6 +298,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
             _shape == null
                 ? 'fill: ${_fills[_fill].name} (pick a shape to see it)'
                 : 'fill: ${_fills[_fill].name}',
+          );
+        },
+      ),
+      _ActionTile(
+        icon: Icons.cancel_rounded,
+        title: 'Close icon:\n${_closeStyles[_closeStyle].name}',
+        secondary: true,
+        onTap: () {
+          setState(() => _closeStyle = (_closeStyle + 1) % _closeStyles.length);
+          _applyChange(
+            context,
+            'close icon: ${_closeStyles[_closeStyle].name} (drag the bubble to see it)',
           );
         },
       ),

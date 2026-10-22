@@ -193,14 +193,20 @@ class BubbleService : FloatingBubbleService() {
         )
         val closePx = Helpers.dpToPx(closeSize)
         val closeBackground = bubbleOptions.closeIconBackground
-        val closeComposed = closeBackground?.let { background ->
-            (closeBitmap ?: IconComposer.drawableToBitmap(this, closeIcon, closePx))
-                ?.let { IconComposer.compose(this, it, closePx, background) }
-        }
-        when {
-            closeComposed != null -> builder.closeBubble(closeComposed)
-            closeBitmap != null -> builder.closeBubble(Bitmap.createScaledBitmap(closeBitmap, closePx, closePx, true))
-            else -> builder.closeBubble(closeIcon, closeSize, closeSize)
+        val closeColor = bubbleOptions.closeIconColor
+        if (closeBitmap == null && closeBackground == null && closeColor == null) {
+            builder.closeBubble(closeIcon, closeSize, closeSize)
+        } else {
+            val base = closeBitmap ?: IconComposer.drawableToBitmap(this, closeIcon, closePx)
+            if (base == null) {
+                builder.closeBubble(closeIcon, closeSize, closeSize)
+            } else {
+                val tinted = closeColor?.let { IconComposer.tint(base, it) } ?: base
+                builder.closeBubble(
+                    closeBackground?.let { IconComposer.compose(this, tinted, closePx, it) }
+                        ?: Bitmap.createScaledBitmap(tinted, closePx, closePx, true)
+                )
+            }
         }
 
         return builder

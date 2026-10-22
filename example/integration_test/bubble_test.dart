@@ -99,6 +99,20 @@ void main() {
     }
   });
 
+  testWidgets('starts with a tinted close icon on a background', (_) async {
+    expect(
+      await bubble.startBubble(
+        bubbleOptions: const BubbleOptions(
+          closeIconColor: Color(0xFFFFFFFF),
+          closeIconBackground: BubbleBackground(color: Color(0xFFD32F2F)),
+        ),
+      ),
+      isTrue,
+    );
+    await settle();
+    expect(await bubble.isBubbleVisible(), isTrue);
+  });
+
   testWidgets('hide and show fail when not running', (_) async {
     expect(await bubble.hideBubble(), isFalse);
     expect(await bubble.showBubble(), isFalse);

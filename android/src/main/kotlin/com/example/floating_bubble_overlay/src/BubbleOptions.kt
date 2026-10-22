@@ -12,6 +12,7 @@ import kotlinx.parcelize.Parcelize
  * @param closeIconSize The size of the close button, defaults to [bubbleSize].
  * @param bubbleBackground An optional background drawn behind the bubble icon.
  * @param closeIconBackground An optional background drawn behind the close icon.
+ * @param closeIconColor An optional ARGB color used to tint the close icon.
  * @param startLocationX The x coordinate of the bubble.
  * @param startLocationY The y coordinate of the bubble.
  * @param bubbleSize The size of the bubble.
@@ -44,6 +45,7 @@ data class BubbleOptions(
     val closeIconSize: Double?,
     val bubbleBackground: BubbleBackground?,
     val closeIconBackground: BubbleBackground?,
+    val closeIconColor: Int?,
 ) : Parcelable {
     companion object {
         /**
@@ -71,7 +73,9 @@ data class BubbleOptions(
                 call.argument<String>(Constants.CLOSE_ICON_ASSET)?.let(resolveAsset),
                 call.argument(Constants.CLOSE_ICON_SIZE),
                 BubbleBackground.fromMap(call.argument(Constants.BUBBLE_BACKGROUND), resolveAsset),
-                BubbleBackground.fromMap(call.argument(Constants.CLOSE_ICON_BACKGROUND), resolveAsset)
+                BubbleBackground.fromMap(call.argument(Constants.CLOSE_ICON_BACKGROUND), resolveAsset),
+                // ARGB colors above 0x7FFFFFFF arrive as Long.
+                call.argument<Number>(Constants.CLOSE_ICON_COLOR)?.toLong()?.toInt()
             )
         }
     }
