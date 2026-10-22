@@ -172,24 +172,35 @@ class BubbleService : FloatingBubbleService() {
         val builder = FloatingBubble.Builder(this)
 
         val bubbleBitmap = Helpers.loadFlutterAsset(this, bubbleOptions.bubbleIconAsset)
-        if (bubbleBitmap != null) {
-            builder.bubble(bubbleBitmap, bubbleSize, bubbleSize)
-        } else {
-            val bubbleIcon = Helpers.getDrawableId(this, bubbleOptions.bubbleIcon, getAppIconResId())
-            builder.bubble(bubbleIcon, bubbleSize, bubbleSize)
+        val bubbleIcon = Helpers.getDrawableId(this, bubbleOptions.bubbleIcon, getAppIconResId())
+        val bubbleBackground = bubbleOptions.bubbleBackground
+        val bubbleComposed = bubbleBackground?.let { background ->
+            val px = Helpers.dpToPx(bubbleSize)
+            (bubbleBitmap ?: IconComposer.drawableToBitmap(this, bubbleIcon, px))
+                ?.let { IconComposer.compose(this, it, px, background) }
+        }
+        when {
+            bubbleComposed != null -> builder.bubble(bubbleComposed, bubbleSize, bubbleSize)
+            bubbleBitmap != null -> builder.bubble(bubbleBitmap, bubbleSize, bubbleSize)
+            else -> builder.bubble(bubbleIcon, bubbleSize, bubbleSize)
         }
 
         val closeBitmap = Helpers.loadFlutterAsset(this, bubbleOptions.closeIconAsset)
-        if (closeBitmap != null) {
-            val px = Helpers.dpToPx(closeSize)
-            builder.closeBubble(Bitmap.createScaledBitmap(closeBitmap, px, px, true))
-        } else {
-            val closeIcon = Helpers.getDrawableId(
-                this,
-                bubbleOptions.closeIcon,
-                android.R.drawable.ic_menu_close_clear_cancel
-            )
-            builder.closeBubble(closeIcon, closeSize, closeSize)
+        val closeIcon = Helpers.getDrawableId(
+            this,
+            bubbleOptions.closeIcon,
+            android.R.drawable.ic_menu_close_clear_cancel
+        )
+        val closePx = Helpers.dpToPx(closeSize)
+        val closeBackground = bubbleOptions.closeIconBackground
+        val closeComposed = closeBackground?.let { background ->
+            (closeBitmap ?: IconComposer.drawableToBitmap(this, closeIcon, closePx))
+                ?.let { IconComposer.compose(this, it, closePx, background) }
+        }
+        when {
+            closeComposed != null -> builder.closeBubble(closeComposed)
+            closeBitmap != null -> builder.closeBubble(Bitmap.createScaledBitmap(closeBitmap, closePx, closePx, true))
+            else -> builder.closeBubble(closeIcon, closeSize, closeSize)
         }
 
         return builder

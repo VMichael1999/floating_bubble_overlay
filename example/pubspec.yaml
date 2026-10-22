@@ -25,4 +25,5 @@ flutter:
   uses-material-design: true
   assets:
     - assets/bubble.png
+    - assets/bubble_bg.png
     - assets/close.png

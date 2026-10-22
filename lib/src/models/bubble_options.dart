@@ -1,4 +1,5 @@
 import '../enums/enums.dart';
+import 'bubble_background.dart';
 
 /// [BubbleOptions] is a class that contains all the customizable options for the bubble passed to the `FloatingBubbleOverlay.startBubble` method.
 class BubbleOptions {
@@ -24,6 +25,14 @@ class BubbleOptions {
 
   /// The size of the close button (dp). Defaults to [bubbleSize].
   final double? closeIconSize;
+
+  /// An optional background (shape, color, image, border) drawn behind the bubble icon.
+  ///
+  /// Without it the icon is drawn as is, so transparent PNGs show only the artwork.
+  final BubbleBackground? bubbleBackground;
+
+  /// An optional background drawn behind the close icon.
+  final BubbleBackground? closeIconBackground;
 
   /// The initial starting position of the bubble on the x axis (in logical pixels, dp).
   final double startLocationX;
@@ -64,6 +73,8 @@ class BubbleOptions {
     this.bubbleIconAsset,
     this.closeIconAsset,
     this.closeIconSize,
+    this.bubbleBackground,
+    this.closeIconBackground,
     this.startLocationX = 0,
     this.startLocationY = 200,
     this.bubbleSize = 60,
@@ -90,6 +101,8 @@ class BubbleOptions {
       'bubbleIconAsset': bubbleIconAsset,
       'closeIconAsset': closeIconAsset,
       'closeIconSize': closeIconSize,
+      'bubbleBackground': bubbleBackground?.toMap(),
+      'closeIconBackground': closeIconBackground?.toMap(),
       'startLocationX': startLocationX,
       'startLocationY': startLocationY,
       'bubbleSize': bubbleSize,

@@ -153,4 +153,43 @@ void main() {
       'isBubbleVisible',
     ]);
   });
+
+  test('BubbleBackground is serialized inside the options', () async {
+    await FloatingBubbleOverlay.instance.startBubble(
+      bubbleOptions: const BubbleOptions(
+        bubbleBackground: BubbleBackground(
+          shape: BubbleShape.roundedSquare,
+          color: Color(0xFF0A66C2),
+          padding: 8,
+          cornerRadius: 16,
+          borderColor: Color(0xFFFFFFFF),
+          borderWidth: 2,
+        ),
+        closeIconBackground: BubbleBackground(imageAsset: 'assets/bg.png'),
+      ),
+    );
+    final args = calls.single.arguments as Map;
+    expect(args['bubbleBackground'], {
+      'shape': BubbleShape.roundedSquare.index,
+      'color': 0xFF0A66C2,
+      'imageAsset': null,
+      'padding': 8,
+      'cornerRadius': 16,
+      'borderColor': 0xFFFFFFFF,
+      'borderWidth': 2,
+    });
+    expect((args['closeIconBackground'] as Map)['imageAsset'], 'assets/bg.png');
+    expect((args['closeIconBackground'] as Map)['shape'], 0);
+  });
+
+  test('no background by default', () {
+    final map = const BubbleOptions().toMap();
+    expect(map['bubbleBackground'], isNull);
+    expect(map['closeIconBackground'], isNull);
+  });
+
+  test('BubbleBackground validates values', () {
+    expect(() => BubbleBackground(padding: -1), throwsAssertionError);
+    expect(() => BubbleBackground(borderWidth: -1), throwsAssertionError);
+  });
 }

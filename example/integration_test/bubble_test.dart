@@ -1,5 +1,6 @@
 // Runs on a real device or emulator. Grant the overlay permission first:
 //   adb shell appops set com.example.floating_bubble_overlay_example SYSTEM_ALERT_WINDOW allow
+import 'package:flutter/painting.dart' show Color;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:floating_bubble_overlay/floating_bubble_overlay.dart';
@@ -70,6 +71,32 @@ void main() {
     expect(await bubble.startBubble(), isTrue);
     await settle();
     expect(await bubble.isRunning(), isTrue);
+  });
+
+  testWidgets('starts with every background shape', (_) async {
+    for (final shape in BubbleShape.values) {
+      expect(
+        await bubble.startBubble(
+          bubbleOptions: BubbleOptions(
+            bubbleIconAsset: 'assets/bubble.png',
+            bubbleBackground: BubbleBackground(
+              shape: shape,
+              color: const Color(0xFF0A66C2),
+              imageAsset: 'assets/bubble_bg.png',
+              borderColor: const Color(0xFFFFFFFF),
+              borderWidth: 2,
+            ),
+            closeIconBackground: BubbleBackground(shape: shape),
+          ),
+        ),
+        isTrue,
+        reason: '$shape',
+      );
+      await settle();
+      expect(await bubble.isBubbleVisible(), isTrue, reason: '$shape');
+      expect(await bubble.stopBubble(), isTrue);
+      await settle();
+    }
   });
 
   testWidgets('hide and show fail when not running', (_) async {

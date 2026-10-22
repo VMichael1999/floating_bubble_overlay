@@ -24,6 +24,7 @@ It is built on top of [Floating-Bubble-View](https://github.com/TorryDo/Floating
 - 👆 **Tap** the bubble → brings your app to the foreground (configurable with `openAppOnTap`)
 - ✋ **Drag** the bubble → shows a close "X" zone (`following` or `fixed`)
 - 🖼 **Icons from your Flutter `assets/`** or Android drawables (falls back to your app icon)
+- 🎨 **Optional background** behind the icon: circle, square or rounded square, with a color, an image and a border
 - 👁 **Hide / show** the bubble without stopping the service
 - 🔔 **Events**: tap, tap down / up, move and **close by the user**
 - 🛎 **Silent foreground notification** that opens your app, with an optional **"Stop" button**
@@ -74,6 +75,35 @@ const BubbleOptions(
 
 Drawables are referenced by name, without extension, and live in your **app** (`android/app/src/main/res/drawable/my_bubble.png` → `bubbleIcon: 'my_bubble'`).
 If an icon cannot be loaded, the app icon (or a default close icon) is used and a warning is logged.
+
+### Background (shape, color, image)
+
+By default the icon is drawn as is, so a transparent PNG shows only the artwork.
+Add a `BubbleBackground` to draw it on a shape:
+
+```dart
+const BubbleOptions(
+  bubbleIconAsset: 'assets/bubble.png',
+  bubbleBackground: BubbleBackground(
+    shape: BubbleShape.circle,          // circle, square, roundedSquare
+    color: Color(0xFF0A66C2),           // fill color
+    // imageAsset: 'assets/bg.png',     // or a background image (cropped to fill)
+    padding: 6,                         // space around the icon (dp)
+    borderColor: Color(0xFFFFFFFF),     // optional border
+    borderWidth: 2,
+  ),
+  // closeIconBackground: BubbleBackground(...) works the same for the close icon.
+)
+```
+
+| Option | Description | Default |
+|---|---|---|
+| `shape` | `BubbleShape.circle`, `square` or `roundedSquare` | `circle` |
+| `color` | Fill color | none |
+| `imageAsset` | Flutter asset drawn as the background, cropped to fill the shape (over `color`) | none |
+| `padding` | Space between the edge and the icon (dp) | `6` |
+| `cornerRadius` | Corner radius for `roundedSquare` (dp) | `12` |
+| `borderColor` / `borderWidth` | Border (dp); none when the color is `null` or the width is `0` | none / `0` |
 
 > The notification `icon` must be a drawable. Android draws small notification icons as a **white silhouette**, so use a monochrome icon with transparency.
 
@@ -182,6 +212,7 @@ Callbacks are delivered while your Flutter app is alive. If the bubble outlives 
 | `closeIcon` | Drawable name of the close icon (if no asset) | system close icon |
 | `bubbleSize` | Bubble width and height (dp), must be `> 0` | `60` |
 | `closeIconSize` | Close icon width and height (dp) | `bubbleSize` |
+| `bubbleBackground` / `closeIconBackground` | Optional [background](#background-shape-color-image) behind the icon | none |
 | `startLocationX` / `startLocationY` | Initial position (dp) | `0` / `200` |
 | `opacity` | Transparency, `0.0` → `1.0` | `1.0` |
 | `enableClose` | Show the close "X" while dragging | `true` |

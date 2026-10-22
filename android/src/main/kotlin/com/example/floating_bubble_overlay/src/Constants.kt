@@ -48,6 +48,8 @@ class Constants {
         const val BUBBLE_ICON_ASSET = "bubbleIconAsset"
         const val CLOSE_ICON_ASSET = "closeIconAsset"
         const val CLOSE_ICON_SIZE = "closeIconSize"
+        const val BUBBLE_BACKGROUND = "bubbleBackground"
+        const val CLOSE_ICON_BACKGROUND = "closeIconBackground"
 
         // Notification Options Arguments
         const val NOTIFICATION_ID = "notificationId"

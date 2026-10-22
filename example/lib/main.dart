@@ -69,10 +69,48 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   /// Whether the bubble uses the Flutter asset icon or the app icon.
   bool _useAssetIcon = true;
 
+  /// Shape of the background behind the icon (null: no background).
+  BubbleShape? _shape;
+
+  /// Index in [_fills] of the background fill.
+  int _fill = 0;
+
+  static const _shapeNames = {
+    null: 'None',
+    BubbleShape.circle: 'Circle',
+    BubbleShape.roundedSquare: 'Rounded',
+    BubbleShape.square: 'Square',
+  };
+
+  static const _fills = [
+    (name: 'White', color: Color(0xFFFFFFFF), image: null),
+    (name: 'Blue', color: Color(0xFF0A66C2), image: null),
+    (name: 'Yellow', color: Color(0xFFFFCA28), image: null),
+    (name: 'Image', color: null, image: 'assets/bubble_bg.png'),
+  ];
+
+  BubbleBackground? get _background {
+    final shape = _shape;
+    if (shape == null) return null;
+    final fill = _fills[_fill];
+    return BubbleBackground(
+      shape: shape,
+      color: fill.color,
+      imageAsset: fill.image,
+      padding: 6,
+      cornerRadius: 14,
+      borderColor:
+          fill.name == 'White' ? const Color(0xFF0A66C2) : Colors.white,
+      borderWidth: 2,
+    );
+  }
+
   BubbleOptions get _bubbleOptions => BubbleOptions(
     // A Flutter asset declared in pubspec.yaml (new in 1.1.0). When it is
     // null, the bubble falls back to the app icon.
     bubbleIconAsset: _useAssetIcon ? 'assets/bubble.png' : null,
+    // Optional background behind the icon (new in 1.1.0).
+    bubbleBackground: _background,
     closeIconAsset: 'assets/close.png',
     closeIconSize: 56,
     startLocationX: 0,
@@ -214,6 +252,32 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         onTap: () => _selectIcon(context, useAsset: true),
       ),
       _ActionTile(
+        icon: Icons.crop_square_rounded,
+        title: 'Shape:\n${_shapeNames[_shape]}',
+        secondary: true,
+        onTap: () {
+          final shapes = _shapeNames.keys.toList();
+          setState(
+            () => _shape = shapes[(shapes.indexOf(_shape) + 1) % shapes.length],
+          );
+          _applyChange(context, 'shape: ${_shapeNames[_shape]}');
+        },
+      ),
+      _ActionTile(
+        icon: Icons.format_color_fill_rounded,
+        title: 'Fill:\n${_fills[_fill].name}',
+        secondary: true,
+        onTap: () {
+          setState(() => _fill = (_fill + 1) % _fills.length);
+          _applyChange(
+            context,
+            _shape == null
+                ? 'fill: ${_fills[_fill].name} (pick a shape to see it)'
+                : 'fill: ${_fills[_fill].name}',
+          );
+        },
+      ),
+      _ActionTile(
         icon: Icons.play_arrow_rounded,
         title: 'Start\nBubble',
         onTap: () => _startBubble(context),
@@ -321,14 +385,15 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }) async {
     if (_useAssetIcon == useAsset) return;
     setState(() => _useAssetIcon = useAsset);
+    await _applyChange(context, useAsset ? 'the asset icon' : 'the app icon');
+  }
 
-    final source = useAsset ? 'asset icon' : 'app icon';
+  /// Restarts a running bubble so a new option ([change]) is applied right
+  /// away; otherwise it is used by the next start.
+  Future<void> _applyChange(BuildContext context, String change) async {
     if (!await _bubble.isRunning()) {
       if (!context.mounted) return;
-      _logMessage(
-        context: context,
-        message: 'Next bubble will use the $source',
-      );
+      _logMessage(context: context, message: 'Next bubble will use $change');
       return;
     }
 
@@ -340,7 +405,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     if (!context.mounted) return;
     await _startBubble(context);
     if (!context.mounted) return;
-    _logMessage(context: context, message: 'Bubble restarted with the $source');
+    _logMessage(context: context, message: 'Bubble restarted with $change');
   }
 
   Future<void> _startBubble(BuildContext context) {
