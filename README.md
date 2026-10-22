@@ -10,7 +10,6 @@
 <p align="center">
   <a href="https://pub.dev/packages/floating_bubble_overlay"><img src="https://img.shields.io/pub/v/floating_bubble_overlay?logo=dart&label=pub.dev&color=0175C2" alt="pub version"></a>
   <a href="https://pub.dev/packages/floating_bubble_overlay/score"><img src="https://img.shields.io/pub/points/floating_bubble_overlay?logo=dart&color=0175C2" alt="pub points"></a>
-  <a href="https://pub.dev/packages/floating_bubble_overlay/score"><img src="https://img.shields.io/pub/likes/floating_bubble_overlay?logo=dart&color=0175C2" alt="pub likes"></a>
   <br>
   <a href="https://github.com/VMichael1999/floating_bubble_overlay/actions/workflows/ci.yml"><img src="https://github.com/VMichael1999/floating_bubble_overlay/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
   <a href="https://codecov.io/gh/VMichael1999/floating_bubble_overlay"><img src="https://codecov.io/gh/VMichael1999/floating_bubble_overlay/branch/main/graph/badge.svg" alt="coverage"></a>
