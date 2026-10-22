@@ -1,5 +1,5 @@
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="doc/banner_dark.png">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/VMichael1999/floating_bubble_overlay/main/doc/banner_dark.png">
   <img src="doc/banner_light.png" width="100%" alt="Floating Bubble Overlay banner" />
 </picture>
 
@@ -53,7 +53,7 @@ Está construido sobre [Floating-Bubble-View](https://github.com/TorryDo/Floatin
 
 ```yaml
 dependencies:
-  floating_bubble_overlay: ^1.1.0
+  floating_bubble_overlay: ^1.1.1
 ```
 
 El `minSdk` de Android debe ser **21** o superior.

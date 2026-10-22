@@ -1,3 +1,7 @@
+## 1.1.1
+- Fix the README banner not showing on pub.dev in dark mode.
+- Show the banner and the demo GIF as screenshots on pub.dev.
+
 ## 1.1.0
 ### New
 - `BubbleOptions.bubbleIconAsset` / `closeIconAsset`: use images from your Flutter `assets/` as icons.
